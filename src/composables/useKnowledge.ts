@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getProjectKnowledge, createKnowledgeItem, updateKnowledgeItem, deleteKnowledgeItem } from '../api/knowledge'
 import type { KnowledgeItem } from '../api/knowledge'
+import { supabase } from '../lib/supabase'
 
 export function useKnowledge(projectId: string) {
   const knowledgeItems = ref<KnowledgeItem[]>([])
@@ -42,10 +43,43 @@ export function useKnowledge(projectId: string) {
     return colorMap[type] || 'primary'
   }
 
+  // 检查用户是否为项目成员
+  const checkProjectMembership = async (): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return false
+
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', user.id)
+        .limit(1)
+
+      if (error) {
+        console.error('检查项目成员关系失败:', error)
+        return false
+      }
+
+      return data && data.length > 0
+    } catch (error) {
+      console.error('检查项目成员关系失败:', error)
+      return false
+    }
+  }
+
   // 加载知识库项目
   const loadKnowledgeItems = async () => {
     loading.value = true
     try {
+      // 先检查用户是否为项目成员
+      const isMember = await checkProjectMembership()
+      if (!isMember) {
+        console.warn('用户不是项目成员，无法访问知识库')
+        knowledgeItems.value = []
+        return
+      }
+
       const items = await getProjectKnowledge(projectId)
       knowledgeItems.value = items
       console.log('从 Supabase 加载知识库数据:', knowledgeItems.value)

@@ -515,29 +515,7 @@
         <el-form-item v-if="documentForm.type === 'note'" label="笔记内容" prop="content">
           <el-input v-model="documentForm.content" type="textarea" :rows="6" placeholder="请输入笔记内容" />
         </el-form-item>
-        <el-form-item label="标签">
-          <el-tag
-            v-for="tag in documentForm.tags"
-            :key="tag"
-            closable
-            @close="documentForm.tags = documentForm.tags.filter(t => t !== tag)"
-            style="margin-right: 8px; margin-bottom: 8px;"
-          >
-            {{ tag }}
-          </el-tag>
-          <el-input
-            v-if="inputTagVisible"
-            ref="tagInputRef"
-            v-model="inputTagValue"
-            size="small"
-            @keyup.enter="handleInputTagConfirm"
-            @blur="handleInputTagConfirm"
-            style="width: 90px;"
-          />
-          <el-button v-else size="small" @click="showTagInput">
-            + 新标签
-          </el-button>
-        </el-form-item>
+
       </el-form>
 
       <template #footer>
@@ -593,23 +571,7 @@
             </div>
           </div>
 
-          <div v-if="selectedKnowledgeItem.tags && selectedKnowledgeItem.tags.length > 0" class="knowledge-tags">
-            <h5>标签</h5>
-            <div class="tags-list">
-              <el-tag 
-                v-for="tag in Array.isArray(selectedKnowledgeItem.tags) 
-                  ? selectedKnowledgeItem.tags 
-                  : (typeof selectedKnowledgeItem.tags === 'string' 
-                    ? selectedKnowledgeItem.tags.split(',').map(t => t.trim()) 
-                    : [])"
-                :key="tag" 
-                size="small"
-                style="margin-right: 8px; margin-bottom: 4px;"
-              >
-                {{ tag }}
-              </el-tag>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -787,7 +749,6 @@ interface KnowledgeItem {
   description?: string
   content?: string
   url?: string
-  tags: string[]
   created_at?: string
   created_by?: string
   created_by_name?: string
@@ -800,9 +761,6 @@ const showKnowledgeDetailDialog = ref(false)
 const selectedKnowledgeItem = ref<KnowledgeItem | null>(null)
 const savingDocument = ref(false)
 const documentFormRef = ref<FormInstance | null>(null)
-const inputTagVisible = ref(false)
-const inputTagValue = ref('')
-const tagInputRef = ref<InputInstance | null>(null)
 
 // 使用知识库 composable
 const {
@@ -915,7 +873,6 @@ interface DocumentForm {
   description: string
   content: string
   url: string
-  tags: string[]
 }
 
 const documentForm = reactive<DocumentForm>({
@@ -924,8 +881,7 @@ const documentForm = reactive<DocumentForm>({
   title: '',
   description: '',
   content: '',
-  url: '',
-  tags: []
+  url: ''
 })
 
 // 定义表单验证规则的类型
@@ -1435,9 +1391,6 @@ const editKnowledgeItem = (item: KnowledgeItem) => {
   documentForm.description = item.description || ''
   documentForm.content = item.content || ''
   documentForm.url = item.url || ''
-  // 处理 tags，确保它是字符串数组
-  documentForm.tags = Array.isArray(item.tags) ? item.tags : 
-                     (typeof item.tags === 'string' ? (item.tags as string).split(',').map(tag => tag.trim()) : [])
 
   // 设置编辑模式
   documentForm.id = item.id
@@ -1479,8 +1432,7 @@ const handleSaveDocument = async () => {
         title: documentForm.title,
         description: documentForm.description,
         content: documentForm.content,
-        url: documentForm.url,
-        tags: documentForm.tags
+        url: documentForm.url
       })
       await addActivity(`更新了知识库文档"${documentForm.title}"`, 'knowledge_updated')
     } else {
@@ -1490,14 +1442,24 @@ const handleSaveDocument = async () => {
         title: documentForm.title,
         description: documentForm.description,
         content: documentForm.content,
-        url: documentForm.url,
-        tags: documentForm.tags
+        url: documentForm.url
       })
       await addActivity(`添加了知识库文档"${documentForm.title}"`, 'knowledge_created')
     }
 
     showAddDocumentDialog.value = false
     resetDocumentForm()
+    
+    // 通知外部组件知识库已更新
+    try {
+      localStorage.setItem('knowledge_updated', Date.now().toString())
+      window.dispatchEvent(new StorageEvent('storage', { key: 'knowledge_updated' }))
+    } catch (error) {
+      console.warn('无法发送知识库更新通知:', error)
+    }
+    
+    // 通知其他页面更新知识库数据
+    localStorage.setItem('knowledge_updated', Date.now().toString())
 
   } catch (error: any) {
     ElMessage.error('保存失败: ' + error.message)
@@ -1506,24 +1468,7 @@ const handleSaveDocument = async () => {
   }
 }
 
-// 标签相关方法
-const showTagInput = () => {
-  inputTagVisible.value = true
-  nextTick(() => {
-    tagInputRef.value?.focus()
-  })
-}
 
-const handleInputTagConfirm = () => {
-  if (inputTagValue.value) {
-    const tag = inputTagValue.value.trim()
-    if (tag && !documentForm.tags.includes(tag)) {
-      documentForm.tags.push(tag)
-    }
-  }
-  inputTagVisible.value = false
-  inputTagValue.value = ''
-}
 
 // 重置文档表单
 const resetDocumentForm = () => {
@@ -1533,9 +1478,6 @@ const resetDocumentForm = () => {
   documentForm.description = ''
   documentForm.content = ''
   documentForm.url = ''
-  documentForm.tags = []
-  inputTagVisible.value = false
-  inputTagValue.value = ''
 
   if (documentFormRef.value) {
     documentFormRef.value.resetFields()
@@ -2203,24 +2145,7 @@ onMounted(() => {
   word-wrap: break-word;
 }
 
-.knowledge-tags {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #ebeef5;
-}
 
-.knowledge-tags h5 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #606266;
-}
-
-.tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 
 .empty-state {
   text-align: center;

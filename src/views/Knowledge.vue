@@ -51,7 +51,7 @@
         <el-skeleton :rows="5" animated />
       </div>
 
-      <div v-else-if="knowledgeItems.length === 0" class="empty-state">
+      <div v-else-if="filteredKnowledgeItems.length === 0" class="empty-state">
         <el-icon><Document /></el-icon>
         <h3>暂无知识库内容</h3>
         <p>开始创建您的第一个知识项目</p>
@@ -62,7 +62,7 @@
 
       <div v-else class="knowledge-grid">
         <el-card 
-          v-for="item in knowledgeItems" 
+          v-for="item in filteredKnowledgeItems" 
           :key="item.id"
           class="knowledge-card"
           @click="viewItem(item)"
@@ -92,16 +92,7 @@
             <h3 class="card-title">{{ item.title }}</h3>
             <p class="card-description">{{ item.description || '暂无描述' }}</p>
             
-            <div class="card-tags" v-if="item.tags && item.tags.length > 0">
-              <el-tag 
-                v-for="tag in item.tags" 
-                :key="tag" 
-                size="small"
-                @click.stop="filterByTag(tag)"
-              >
-                {{ tag }}
-              </el-tag>
-            </div>
+
           </div>
 
           <div class="card-footer">
@@ -170,24 +161,7 @@
           />
         </el-form-item>
 
-        <el-form-item label="标签" prop="tags">
-          <el-input 
-            v-model="tagInput" 
-            placeholder="输入标签，按Enter添加"
-            @keyup.enter="addTag"
-          />
-          <div class="tags-container" v-if="form.tags.length > 0">
-            <el-tag 
-              v-for="tag in form.tags" 
-              :key="tag"
-              closable
-              @close="removeTag(tag)"
-              style="margin: 4px 4px 0 0;"
-            >
-              {{ tag }}
-            </el-tag>
-          </div>
-        </el-form-item>
+
       </el-form>
 
       <template #footer>
@@ -232,16 +206,7 @@
             <div class="content-text">{{ selectedItem.content }}</div>
           </div>
 
-          <div v-if="selectedItem.tags && selectedItem.tags.length > 0" class="tags-section">
-            <strong>标签：</strong>
-            <el-tag 
-              v-for="tag in selectedItem.tags" 
-              :key="tag"
-              style="margin-right: 8px;"
-            >
-              {{ tag }}
-            </el-tag>
-          </div>
+
         </div>
       </div>
     </el-dialog>
@@ -249,7 +214,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus,
@@ -269,6 +234,7 @@ import {
   type KnowledgeItem
 } from '../api/knowledge'
 import { getUserProjects } from '../api/projects'
+import { supabase } from '../lib/supabase'
 
 const authStore = useAuthStore()
 
@@ -284,7 +250,6 @@ const showCreateDialog = ref(false)
 const showDetailDialog = ref(false)
 const editingItem = ref<KnowledgeItem | null>(null)
 const selectedItem = ref<KnowledgeItem | null>(null)
-const tagInput = ref('')
 
 // 表单数据
 const form = ref({
@@ -293,7 +258,6 @@ const form = ref({
   content: '',
   type: 'document' as 'document' | 'link' | 'note',
   url: '',
-  tags: [] as string[],
   project_id: ''
 })
 
@@ -346,7 +310,7 @@ const filteredKnowledgeItems = computed(() => {
 const loadUserProjects = async () => {
   try {
     if (!authStore.user?.id) return
-    const projects = await getUserProjects(authStore.user.id)
+    const projects = await getUserProjects()
     userProjects.value = projects
   } catch (error) {
     console.error('加载用户项目失败:', error)
@@ -360,11 +324,50 @@ const loadKnowledgeItems = async () => {
     
     // 获取用户所有项目的知识库
     const allItems: KnowledgeItem[] = []
-    for (const project of userProjects.value) {
-      const items = await getProjectKnowledge(project.id)
-      allItems.push(...items)
+    
+    // 首先获取用户参与的所有项目
+    const { data: projectMemberships, error: memberError } = await supabase
+      .from('project_members')
+      .select('project_id')
+      .eq('user_id', authStore.user.id)
+
+    if (memberError) {
+      console.error('获取项目成员关系失败:', memberError)
+      ElMessage.error('加载项目信息失败')
+      return
     }
+
+    if (projectMemberships && projectMemberships.length > 0) {
+      const projectIds = projectMemberships.map(m => m.project_id)
+      
+      // 直接从数据库获取所有相关的知识库项目
+      const { data: knowledgeData, error: knowledgeError } = await supabase
+        .from('knowledge_items')
+        .select(`
+          *,
+          user_profiles:created_by (full_name)
+        `)
+        .in('project_id', projectIds)
+        .order('created_at', { ascending: false })
+
+      if (knowledgeError) {
+        console.error('获取知识库数据失败:', knowledgeError)
+        ElMessage.error('加载知识库失败')
+        return
+      }
+
+      // 处理数据
+      const processedData = (knowledgeData || []).map(item => ({
+        ...item,
+        created_by_name: item.user_profiles?.full_name || '未知用户',
+        tags: Array.isArray(item.tags) ? item.tags : (item.tags ? [item.tags] : [])
+      }))
+
+      allItems.push(...processedData)
+    }
+    
     knowledgeItems.value = allItems
+    console.log('加载的知识库项目数量:', allItems.length)
   } catch (error) {
     console.error('加载知识库失败:', error)
     ElMessage.error('加载知识库失败')
@@ -383,10 +386,6 @@ const handleTypeFilter = () => {
 
 const handleProjectFilter = () => {
   // 筛选逻辑在计算属性中处理
-}
-
-const filterByTag = (tag: string) => {
-  searchQuery.value = tag
 }
 
 const viewItem = (item: KnowledgeItem) => {
@@ -410,7 +409,6 @@ const editItem = (item: KnowledgeItem) => {
     content: item.content || '',
     type: item.type,
     url: item.url || '',
-    tags: [...(item.tags || [])],
     project_id: item.project_id
   }
   showCreateDialog.value = true
@@ -428,20 +426,6 @@ const confirmDelete = async (item: KnowledgeItem) => {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
     }
-  }
-}
-
-const addTag = () => {
-  if (tagInput.value.trim() && !form.value.tags.includes(tagInput.value.trim())) {
-    form.value.tags.push(tagInput.value.trim())
-    tagInput.value = ''
-  }
-}
-
-const removeTag = (tag: string) => {
-  const index = form.value.tags.indexOf(tag)
-  if (index > -1) {
-    form.value.tags.splice(index, 1)
   }
 }
 
@@ -478,10 +462,8 @@ const resetForm = () => {
     content: '',
     type: 'document',
     url: '',
-    tags: [],
     project_id: ''
   }
-  tagInput.value = ''
   formRef.value?.resetFields()
 }
 
@@ -623,13 +605,6 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 12px;
-}
-
 .card-footer {
   border-top: 1px solid #f0f0f0;
   padding-top: 12px;
@@ -645,10 +620,6 @@ onMounted(async () => {
 
 .created-by {
   margin-left: auto;
-}
-
-.tags-container {
-  margin-top: 8px;
 }
 
 .item-detail .detail-header {

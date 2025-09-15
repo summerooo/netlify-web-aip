@@ -23,6 +23,26 @@ export async function getProjectKnowledge(projectId: string): Promise<KnowledgeI
     if (userError) throw userError
     if (!user) throw new Error('用户未登录')
 
+    // 先检查用户是否为项目成员
+    const { data: membership, error: membershipError } = await supabase
+      .from('project_members')
+      .select('id, role')
+      .eq('project_id', projectId)
+      .eq('user_id', user.id)
+      .limit(1)
+
+    if (membershipError) {
+      console.error('检查项目成员关系失败:', membershipError)
+      throw new Error('无法验证项目成员身份')
+    }
+
+    if (!membership || membership.length === 0) {
+      console.log('用户不是项目成员，无法访问知识库')
+      return []
+    }
+
+    console.log('用户是项目成员，角色:', membership[0].role)
+
     const { data, error } = await supabase
       .from('knowledge_items')
       .select(`
@@ -32,7 +52,10 @@ export async function getProjectKnowledge(projectId: string): Promise<KnowledgeI
       .eq('project_id', projectId)
       .order('created_at', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      console.error('获取知识库数据失败:', error)
+      throw error
+    }
 
     // 处理数据，添加创建者姓名
     const processedData = (data || []).map(item => ({
@@ -41,6 +64,7 @@ export async function getProjectKnowledge(projectId: string): Promise<KnowledgeI
       tags: Array.isArray(item.tags) ? item.tags : (item.tags ? [item.tags] : [])
     }))
 
+    console.log(`为项目 ${projectId} 加载了 ${processedData.length} 个知识库项目`)
     return processedData
   } catch (error) {
     console.error('获取项目知识库失败:', error)
@@ -62,6 +86,23 @@ export async function createKnowledgeItem(data: {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
     if (!user) throw new Error('用户未登录')
+
+    // 检查用户是否为项目成员
+    const { data: membership, error: membershipError } = await supabase
+      .from('project_members')
+      .select('id, role')
+      .eq('project_id', data.project_id)
+      .eq('user_id', user.id)
+      .limit(1)
+
+    if (membershipError) {
+      console.error('检查项目成员关系失败:', membershipError)
+      throw new Error('无法验证项目成员身份')
+    }
+
+    if (!membership || membership.length === 0) {
+      throw new Error('您不是该项目的成员，无法创建知识库项目')
+    }
 
     const itemId = uuidv4()
     const now = new Date().toISOString()
@@ -87,8 +128,12 @@ export async function createKnowledgeItem(data: {
       `)
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('创建知识库项目失败:', error)
+      throw error
+    }
 
+    console.log('成功创建知识库项目:', result.title)
     return {
       ...result,
       created_by_name: result.user_profiles?.full_name || '未知用户',
