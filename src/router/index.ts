@@ -67,7 +67,13 @@ const router = createRouter({
           path: 'profile',
           name: 'Profile',
           component: () => import('../views/Profile.vue')
-        }
+        },
+        {
+          path: 'knowledge',
+          name: 'Knowledge',
+          component: () => import('../views/Knowledge.vue')
+        },
+        
       ]
     }
   ]

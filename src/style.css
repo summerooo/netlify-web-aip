@@ -69,8 +69,8 @@ body {
   transition: box-shadow 0.3s cubic-bezier(.25,.8,.25,1), transform 0.2s cubic-bezier(.25,.8,.25,1);
 }
 .card:hover, .el-card:hover, .org-card:hover, .stat-card:hover, .login-card:hover, .invitation-card:hover, .project-detail:hover, .tasks-page:hover, .recent-projects:hover, .ai-assistant:hover, .project-detail-panel:hover {
-  box-shadow: 0 8px 32px rgba(64, 158, 255, 0.16), 0 3px 16px rgba(0,0,0,0.10);
-  transform: translateY(-2px) scale(1.01);
+  /* box-shadow: 0 8px 32px rgba(64, 158, 255, 0.16), 0 3px 16px rgba(0,0,0,0.10);
+  transform: translateY(-2px) scale(1.01); */
 }
 .button, .el-button, .primary-button, .secondary-button {
   border-radius: 8px !important;

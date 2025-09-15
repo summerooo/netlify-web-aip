@@ -130,8 +130,8 @@
                   {{ project.status }}
                 </el-tag>
               </div>
-              <div class="project-actions">
-                <el-dropdown trigger="click" @click.stop>
+              <div class="project-actions"  @click.stop>
+                <el-dropdown trigger="click">
                   <el-button type="text" size="small">
                     <el-icon><MoreFilled /></el-icon>
                   </el-button>

@@ -741,6 +741,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: 10px;
 }
 
 .org-info h1 {

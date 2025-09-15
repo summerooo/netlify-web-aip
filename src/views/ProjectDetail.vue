@@ -1,19 +1,15 @@
 <template>
   <div class="project-detail">
     <el-container>
-              <div class="back-section">
-          <el-button 
-            link
-            size="small"
-            @click="$router.back()"
-            class="back-btn"
-          >
-            <el-icon><ArrowLeft /></el-icon>
-            返回
-          </el-button>
-        </div>
+      <div class="back-section">
+        <el-button link size="small" @click="$router.back()" class="back-btn">
+          <el-icon>
+            <ArrowLeft />
+          </el-icon>
+          返回
+        </el-button>
+      </div>
       <el-header class="header">
-
         <div class="header-content">
           <div class="title-row">
             <h1>{{ project?.name }}</h1>
@@ -26,7 +22,9 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="openDeleteDialog">
-                      <el-icon><Delete /></el-icon>
+                      <el-icon>
+                        <Delete />
+                      </el-icon>
                       删除项目
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -46,7 +44,9 @@
                 <el-card class="stat-card">
                   <div class="stat-content">
                     <div class="stat-icon">
-                      <el-icon color="#409eff"><List /></el-icon>
+                      <el-icon color="#409eff">
+                        <List />
+                      </el-icon>
                     </div>
                     <div class="stat-info">
                       <div class="stat-number">{{ projectStats.totalTasks }}</div>
@@ -58,7 +58,9 @@
                 <el-card class="stat-card">
                   <div class="stat-content">
                     <div class="stat-icon">
-                      <el-icon color="#67c23a"><Check /></el-icon>
+                      <el-icon color="#67c23a">
+                        <Check />
+                      </el-icon>
                     </div>
                     <div class="stat-info">
                       <div class="stat-number">{{ projectStats.completedTasks }}</div>
@@ -70,7 +72,9 @@
                 <el-card class="stat-card">
                   <div class="stat-content">
                     <div class="stat-icon">
-                      <el-icon color="#e6a23c"><Clock /></el-icon>
+                      <el-icon color="#e6a23c">
+                        <Clock />
+                      </el-icon>
                     </div>
                     <div class="stat-info">
                       <div class="stat-number">{{ projectStats.inProgressTasks }}</div>
@@ -82,7 +86,9 @@
                 <el-card class="stat-card">
                   <div class="stat-content">
                     <div class="stat-icon">
-                      <el-icon color="#909399"><User /></el-icon>
+                      <el-icon color="#909399">
+                        <User />
+                      </el-icon>
                     </div>
                     <div class="stat-info">
                       <div class="stat-number">{{ projectStats.totalMembers }}</div>
@@ -100,7 +106,9 @@
                   <div class="activity-list">
                     <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
                       <div class="activity-avatar">
-                        <el-icon><User /></el-icon>
+                        <el-icon>
+                          <User />
+                        </el-icon>
                       </div>
                       <div class="activity-content">
                         <p>{{ activity.description }}</p>
@@ -116,7 +124,9 @@
                   </template>
                   <div class="ai-content">
                     <div class="ai-avatar">
-                      <el-icon><Setting /></el-icon>
+                      <el-icon>
+                        <Setting />
+                      </el-icon>
                     </div>
                     <div class="ai-message">
                       <p>我是您的项目AI助手，可以帮助您分析项目进度、识别风险、优化任务分配。有什么需要帮助的吗？</p>
@@ -135,7 +145,9 @@
               <div class="tasks-header">
                 <h3>项目任务</h3>
                 <el-button type="primary" @click="showCreateTaskDialog = true">
-                  <el-icon><Plus /></el-icon>
+                  <el-icon>
+                    <Plus />
+                  </el-icon>
                   创建任务
                 </el-button>
               </div>
@@ -152,7 +164,8 @@
                       <p>{{ task.description }}</p>
                       <div class="task-meta">
                         <el-tag size="small">{{ task.priority }}</el-tag>
-                        <span class="assignee">{{ task.assigned_user?.full_name || task.assigned_user?.email || '未分配' }}</span>
+                        <span class="assignee">{{ task.assigned_user?.full_name || task.assigned_user?.email || '未分配'
+                          }}</span>
                       </div>
                     </div>
                   </div>
@@ -181,12 +194,14 @@
                     <el-badge :value="completedTasks.length" />
                   </div>
                   <div class="task-list">
-                    <div v-for="task in completedTasks" :key="task.id" class="task-card completed" @click="openTaskDetail(task)">
+                    <div v-for="task in completedTasks" :key="task.id" class="task-card completed"
+                      @click="openTaskDetail(task)">
                       <h5>{{ task.title }}</h5>
                       <p>{{ task.description }}</p>
                       <div class="task-meta">
                         <el-tag size="small" type="success">{{ task.priority }}</el-tag>
-                        <span class="assignee">{{ task.assigned_user?.full_name || task.assigned_user?.email || '未分配' }}</span>
+                        <span class="assignee">{{ task.assigned_user?.full_name || task.assigned_user?.email || '未分配'
+                          }}</span>
                       </div>
                     </div>
                   </div>
@@ -200,7 +215,9 @@
               <div class="members-header">
                 <h3>项目成员</h3>
                 <el-button type="primary" size="small" @click="showInviteMemberDialog = true">
-                  <el-icon><Plus /></el-icon>
+                  <el-icon>
+                    <Plus />
+                  </el-icon>
                   添加成员
                 </el-button>
               </div>
@@ -220,12 +237,8 @@
                       <span class="stat-label">任务</span>
                     </div>
                     <div class="member-actions" v-if="member.user_id === authStore.user?.id">
-                      <el-button 
-                        type="danger" 
-                        size="small" 
-                        @click="showLeaveProjectDialog = true"
-                        :loading="leavingProject"
-                      >
+                      <el-button type="danger" size="small" @click="showLeaveProjectDialog = true"
+                        :loading="leavingProject">
                         退出项目
                       </el-button>
                     </div>
@@ -240,18 +253,18 @@
               <div class="knowledge-header">
                 <h3>项目知识库</h3>
                 <div class="knowledge-actions">
-                  <el-input
-                    v-model="knowledgeSearchQuery"
-                    placeholder="搜索文档..."
-                    style="width: 200px; margin-right: 12px;"
-                    clearable
-                  >
+                  <el-input v-model="knowledgeSearchQuery" placeholder="搜索文档..."
+                    style="width: 200px; margin-right: 12px;" clearable>
                     <template #prefix>
-                      <el-icon><Search /></el-icon>
+                      <el-icon>
+                        <Search />
+                      </el-icon>
                     </template>
                   </el-input>
                   <el-button type="primary" size="small" @click="showAddDocumentDialog = true">
-                    <el-icon><Plus /></el-icon>
+                    <el-icon>
+                      <Plus />
+                    </el-icon>
                     添加文档
                   </el-button>
                 </div>
@@ -259,53 +272,69 @@
 
               <div class="knowledge-content">
                 <div v-if="filteredKnowledgeItems.length === 0 && !knowledgeSearchQuery" class="empty-state">
-                  <el-icon><Document /></el-icon>
+                  <el-icon>
+                    <Document />
+                  </el-icon>
                   <h3>知识库为空</h3>
                   <p>添加项目相关文档来构建知识库</p>
                   <el-button type="primary" @click="showAddDocumentDialog = true">添加文档</el-button>
                 </div>
 
                 <div v-else-if="filteredKnowledgeItems.length === 0 && knowledgeSearchQuery" class="empty-state">
-                  <el-icon><Search /></el-icon>
+                  <el-icon>
+                    <Search />
+                  </el-icon>
                   <h3>未找到相关文档</h3>
                   <p>尝试使用其他关键词搜索</p>
                 </div>
 
                 <div v-else class="knowledge-grid">
-                  <el-card 
-                    v-for="item in filteredKnowledgeItems" 
-                    :key="item.id" 
-                    class="knowledge-item"
-                    @click="openKnowledgeItem(item)"
-                  >
+                  <el-card v-for="item in filteredKnowledgeItems" :key="item.id" class="knowledge-item"
+                    @click="openKnowledgeItem(item)">
                     <div class="knowledge-item-header">
                       <div class="knowledge-icon">
-                        <el-icon v-if="item.type === 'document'"><Document /></el-icon>
-                        <el-icon v-else-if="item.type === 'link'"><Link /></el-icon>
-                        <el-icon v-else-if="item.type === 'note'"><Edit /></el-icon>
-                        <el-icon v-else><Document /></el-icon>
+                        <el-icon v-if="item.type === 'document'">
+                          <Document />
+                        </el-icon>
+                        <el-icon v-else-if="item.type === 'link'">
+                          <Link />
+                        </el-icon>
+                        <el-icon v-else-if="item.type === 'note'">
+                          <Edit />
+                        </el-icon>
+                        <el-icon v-else>
+                          <Document />
+                        </el-icon>
                       </div>
                       <div class="knowledge-meta">
                         <el-tag :type="getKnowledgeTypeColor(item.type)" size="small">
                           {{ getKnowledgeTypeName(item.type) }}
                         </el-tag>
-                        <el-dropdown trigger="click" @click.stop>
-                          <el-button type="text" size="small">
-                            <el-icon><MoreFilled /></el-icon>
-                          </el-button>
-                          <template #dropdown>
-                            <el-dropdown-menu>
-                              <el-dropdown-item @click="editKnowledgeItem(item)">
-                                <el-icon><Edit /></el-icon>
-                                编辑
-                              </el-dropdown-item>
-                              <el-dropdown-item @click="deleteKnowledgeItem(item)" divided>
-                                <el-icon><Delete /></el-icon>
-                                删除
-                              </el-dropdown-item>
-                            </el-dropdown-menu>
-                          </template>
-                        </el-dropdown>
+                        <div @click.stop>
+                          <el-dropdown trigger="click">
+                            <el-button type="text" size="small">
+                              <el-icon>
+                                <MoreFilled />
+                              </el-icon>
+                            </el-button>
+                            <template #dropdown>
+                              <el-dropdown-menu>
+                                <el-dropdown-item @click="editKnowledgeItem(item)">
+                                  <el-icon>
+                                    <Edit />
+                                  </el-icon>
+                                  编辑
+                                </el-dropdown-item>
+                                <el-dropdown-item @click="deleteKnowledgeItem(item)" divided>
+                                  <el-icon>
+                                    <Delete />
+                                  </el-icon>
+                                  删除
+                                </el-dropdown-item>
+                              </el-dropdown-menu>
+                            </template>
+                          </el-dropdown>
+                        </div>
                       </div>
                     </div>
                     <div class="knowledge-item-content">
@@ -326,22 +355,13 @@
     </el-container>
 
     <!-- 创建任务对话框 -->
-    <el-dialog
-      v-model="showCreateTaskDialog"
-      title="创建任务"
-      width="500px"
-    >
+    <el-dialog v-model="showCreateTaskDialog" title="创建任务" width="500px">
       <el-form :model="taskForm" label-width="80px">
         <el-form-item label="任务标题">
           <el-input v-model="taskForm.title" placeholder="请输入任务标题" />
         </el-form-item>
         <el-form-item label="任务描述">
-          <el-input 
-            v-model="taskForm.description" 
-            type="textarea" 
-            :rows="3"
-            placeholder="请输入任务描述"
-          />
+          <el-input v-model="taskForm.description" type="textarea" :rows="3" placeholder="请输入任务描述" />
         </el-form-item>
         <el-form-item label="优先级">
           <el-select v-model="taskForm.priority" placeholder="请选择优先级">
@@ -352,50 +372,27 @@
         </el-form-item>
         <el-form-item label="指派给">
           <el-select v-model="taskForm.assignee" placeholder="请选择成员">
-            <el-option 
-              v-for="member in projectMembers" 
-              :key="member.id"
-              :label="member.name || member.email" 
-              :value="member.user_id" 
-            />
+            <el-option v-for="member in projectMembers" :key="member.id" :label="member.name || member.email"
+              :value="member.user_id" />
           </el-select>
         </el-form-item>
       </el-form>
 
       <template #footer>
         <el-button @click="showCreateTaskDialog = false">取消</el-button>
-        <el-button 
-          type="primary" 
-          :loading="creatingTask"
-          @click="handleCreateTask"
-          :disabled="!taskForm.title"
-        >
+        <el-button type="primary" :loading="creatingTask" @click="handleCreateTask" :disabled="!taskForm.title">
           {{ creatingTask ? '创建中...' : '创建' }}
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 添加成员对话框 -->
-    <el-dialog
-      v-model="showInviteMemberDialog"
-      title="添加项目成员"
-      width="500px"
-      @open="loadOrganizationMembers"
-    >
+    <el-dialog v-model="showInviteMemberDialog" title="添加项目成员" width="500px" @open="loadOrganizationMembers">
       <el-form :model="inviteForm" label-width="80px">
         <el-form-item label="选择成员">
-          <el-select 
-            v-model="inviteForm.selectedMember" 
-            placeholder="请选择组织成员"
-            filterable
-            :loading="loadingOrgMembers"
-          >
-            <el-option 
-              v-for="member in availableOrgMembers" 
-              :key="member.user_id"
-              :label="member.email || member.user_id"
-              :value="member.user_id"
-            >
+          <el-select v-model="inviteForm.selectedMember" placeholder="请选择组织成员" filterable :loading="loadingOrgMembers">
+            <el-option v-for="member in availableOrgMembers" :key="member.user_id"
+              :label="member.email || member.user_id" :value="member.user_id">
               <div class="member-option">
                 <span>{{ member.name || member.email || '未知用户' }}</span>
                 <el-tag size="small" type="info">{{ member.role }}</el-tag>
@@ -416,34 +413,23 @@
 
       <template #footer>
         <el-button @click="showInviteMemberDialog = false">取消</el-button>
-        <el-button 
-          type="primary" 
-          :loading="inviting"
-          @click="handleAddMember"
-          :disabled="!inviteForm.selectedMember"
-        >
+        <el-button type="primary" :loading="inviting" @click="handleAddMember" :disabled="!inviteForm.selectedMember">
           添加到项目
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 邀请链接对话框 -->
-    <el-dialog
-      v-model="showInvitationLinkDialog"
-      title="成员邀请链接"
-      width="500px"
-    >
+    <el-dialog v-model="showInvitationLinkDialog" title="成员邀请链接" width="500px">
       <div class="invitation-link-content">
         <p>已成功创建成员邀请链接，您可以将此链接发送给新成员：</p>
         <div class="invitation-link-box">
-          <el-input 
-            v-model="invitationLink" 
-            readonly
-            size="large"
-          >
+          <el-input v-model="invitationLink" readonly size="large">
             <template #append>
               <el-button @click="copyInvitationLink">
-                <el-icon><Document /></el-icon> 复制
+                <el-icon>
+                  <Document />
+                </el-icon> 复制
               </el-button>
             </template>
           </el-input>
@@ -462,15 +448,12 @@
     </el-dialog>
 
     <!-- 删除项目确认对话框 -->
-    <el-dialog
-      v-model="showDeleteDialog"
-      title="删除项目"
-      width="400px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog v-model="showDeleteDialog" title="删除项目" width="400px" :close-on-click-modal="false">
       <div class="delete-confirmation">
         <div class="warning-icon">
-          <el-icon color="#E6A23C" size="48"><WarningFilled /></el-icon>
+          <el-icon color="#E6A23C" size="48">
+            <WarningFilled />
+          </el-icon>
         </div>
         <div class="warning-text">
           <p><strong>确定要删除项目 "{{ project?.name }}" 吗？</strong></p>
@@ -486,23 +469,14 @@
 
       <template #footer>
         <el-button @click="cancelDelete" :disabled="deleting">取消</el-button>
-        <el-button 
-          type="danger" 
-          @click="confirmDelete"
-          :loading="deleting"
-        >
+        <el-button type="danger" @click="confirmDelete" :loading="deleting">
           {{ deleting ? '删除中...' : '确认删除' }}
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 退出项目确认对话框 -->
-    <el-dialog
-      v-model="showLeaveProjectDialog"
-      title="确认退出项目"
-      width="400px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog v-model="showLeaveProjectDialog" title="确认退出项目" width="400px" :close-on-click-modal="false">
       <div class="leave-dialog-content">
         <p>您确定要退出项目 <strong>{{ project?.name }}</strong> 吗？</p>
         <p class="warning-text">退出后，您将失去对该项目及其所有任务的访问权限。</p>
@@ -510,22 +484,14 @@
 
       <template #footer>
         <el-button @click="showLeaveProjectDialog = false" :disabled="leavingProject">取消</el-button>
-        <el-button 
-          type="danger" 
-          @click="leaveProject"
-          :loading="leavingProject"
-        >
+        <el-button type="danger" @click="leaveProject" :loading="leavingProject">
           {{ leavingProject ? '退出中...' : '确认退出' }}
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 添加文档对话框 -->
-    <el-dialog
-      v-model="showAddDocumentDialog"
-      title="添加知识库文档"
-      width="600px"
-    >
+    <el-dialog v-model="showAddDocumentDialog" title="添加知识库文档" width="600px">
       <el-form :model="documentForm" label-width="80px" :rules="documentRules" ref="documentFormRef">
         <el-form-item label="文档类型" prop="type">
           <el-radio-group v-model="documentForm.type">
@@ -538,59 +504,53 @@
           <el-input v-model="documentForm.title" placeholder="请输入文档标题" />
         </el-form-item>
         <el-form-item label="描述" prop="description">
-          <el-input 
-            v-model="documentForm.description" 
-            type="textarea" 
-            :rows="3"
-            placeholder="请输入文档描述"
-          />
+          <el-input v-model="documentForm.description" type="textarea" :rows="3" placeholder="请输入文档描述" />
         </el-form-item>
         <el-form-item v-if="documentForm.type === 'link'" label="链接地址" prop="url">
           <el-input v-model="documentForm.url" placeholder="请输入链接地址" />
         </el-form-item>
         <el-form-item v-if="documentForm.type === 'document'" label="文档内容" prop="content">
-          <el-input 
-            v-model="documentForm.content" 
-            type="textarea" 
-            :rows="8"
-            placeholder="请输入文档内容"
-          />
+          <el-input v-model="documentForm.content" type="textarea" :rows="8" placeholder="请输入文档内容" />
         </el-form-item>
         <el-form-item v-if="documentForm.type === 'note'" label="笔记内容" prop="content">
-          <el-input 
-            v-model="documentForm.content" 
-            type="textarea" 
-            :rows="6"
-            placeholder="请输入笔记内容"
-          />
+          <el-input v-model="documentForm.content" type="textarea" :rows="6" placeholder="请输入笔记内容" />
         </el-form-item>
         <el-form-item label="标签">
-          <el-input 
-            v-model="documentForm.tags" 
-            placeholder="请输入标签，用逗号分隔"
+          <el-tag
+            v-for="tag in documentForm.tags"
+            :key="tag"
+            closable
+            @close="documentForm.tags = documentForm.tags.filter(t => t !== tag)"
+            style="margin-right: 8px; margin-bottom: 8px;"
+          >
+            {{ tag }}
+          </el-tag>
+          <el-input
+            v-if="inputTagVisible"
+            ref="tagInputRef"
+            v-model="inputTagValue"
+            size="small"
+            @keyup.enter="handleInputTagConfirm"
+            @blur="handleInputTagConfirm"
+            style="width: 90px;"
           />
+          <el-button v-else size="small" @click="showTagInput">
+            + 新标签
+          </el-button>
         </el-form-item>
       </el-form>
 
       <template #footer>
         <el-button @click="showAddDocumentDialog = false">取消</el-button>
-        <el-button 
-          type="primary" 
-          :loading="savingDocument"
-          @click="handleSaveDocument"
-        >
+        <el-button type="primary" :loading="savingDocument" @click="handleSaveDocument">
           {{ savingDocument ? '保存中...' : '保存' }}
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 知识库详情对话框 -->
-    <el-dialog
-      v-model="showKnowledgeDetailDialog"
-      :title="selectedKnowledgeItem?.title"
-      width="800px"
-      class="knowledge-detail-dialog"
-    >
+    <el-dialog v-model="showKnowledgeDetailDialog" :title="selectedKnowledgeItem?.title" width="800px"
+      class="knowledge-detail-dialog">
       <div v-if="selectedKnowledgeItem" class="knowledge-detail-content">
         <div class="knowledge-detail-header">
           <div class="knowledge-detail-meta">
@@ -608,59 +568,64 @@
             <p>{{ selectedKnowledgeItem.description }}</p>
           </div>
         </div>
-        
+
         <div class="knowledge-detail-body">
           <div v-if="selectedKnowledgeItem.type === 'link'" class="link-content">
             <div class="link-preview">
-              <el-icon><Link /></el-icon>
+              <el-icon>
+                <Link />
+              </el-icon>
               <div class="link-info">
                 <h4>外部链接</h4>
                 <a :href="selectedKnowledgeItem.url" target="_blank" class="external-link">
                   {{ selectedKnowledgeItem.url }}
-                  <el-icon><TopRight /></el-icon>
+                  <el-icon>
+                    <TopRight />
+                  </el-icon>
                 </a>
               </div>
             </div>
           </div>
-          
+
           <div v-else class="document-content">
             <div class="content-viewer">
               <pre>{{ selectedKnowledgeItem.content || '暂无内容' }}</pre>
             </div>
           </div>
-          
-          <div v-if="selectedKnowledgeItem.tags" class="knowledge-tags">
+
+          <div v-if="selectedKnowledgeItem.tags && selectedKnowledgeItem.tags.length > 0" class="knowledge-tags">
             <h5>标签</h5>
             <div class="tags-list">
               <el-tag 
-                v-for="tag in selectedKnowledgeItem.tags.split(',')" 
-                :key="tag.trim()" 
+                v-for="tag in Array.isArray(selectedKnowledgeItem.tags) 
+                  ? selectedKnowledgeItem.tags 
+                  : (typeof selectedKnowledgeItem.tags === 'string' 
+                    ? selectedKnowledgeItem.tags.split(',').map(t => t.trim()) 
+                    : [])"
+                :key="tag" 
                 size="small"
                 style="margin-right: 8px; margin-bottom: 4px;"
               >
-                {{ tag.trim() }}
+                {{ tag }}
               </el-tag>
             </div>
           </div>
         </div>
       </div>
-      
+
       <template #footer>
         <el-button @click="showKnowledgeDetailDialog = false">关闭</el-button>
         <el-button type="primary" @click="editKnowledgeItem(selectedKnowledgeItem)">
-          <el-icon><Edit /></el-icon>
+          <el-icon>
+            <Edit />
+          </el-icon>
           编辑
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 任务详情对话框 -->
-    <el-dialog
-      v-model="taskDetailVisible"
-      title="任务详情"
-      width="650px"
-      class="task-detail-dialog"
-    >
+    <el-dialog v-model="taskDetailVisible" title="任务详情" width="650px" class="task-detail-dialog">
       <div v-if="selectedTask" class="task-detail-content">
         <div class="task-header">
           <h3 class="task-title">{{ selectedTask.title }}</h3>
@@ -668,36 +633,35 @@
             {{ selectedTask.status }}
           </el-tag>
         </div>
-        
+
         <div class="task-description">
           <h4>任务描述</h4>
           <p>{{ selectedTask.description || '暂无描述' }}</p>
         </div>
-        
+
         <div class="task-meta-grid">
           <div class="meta-row">
             <div class="meta-item">
               <label class="meta-label">
-                <el-icon><Flag /></el-icon>
+                <el-icon>
+                  <Flag />
+                </el-icon>
                 优先级
               </label>
               <el-tag :type="getPriorityType(selectedTask.priority)" size="small">
                 {{ selectedTask.priority }}
               </el-tag>
             </div>
-            
+
             <div class="meta-item">
               <label class="meta-label">
-                <el-icon><Clock /></el-icon>
+                <el-icon>
+                  <Clock />
+                </el-icon>
                 状态
               </label>
-              <el-select 
-                v-model="selectedTask.status" 
-                size="small" 
-                class="status-select"
-                :disabled="selectedTask.status === '已完成'"
-                @change="handleStatusChange"
-              >
+              <el-select v-model="selectedTask.status" size="small" class="status-select"
+                :disabled="selectedTask.status === '已完成'" @change="handleStatusChange">
                 <el-option label="待办" value="待办" />
                 <el-option label="进行中" value="进行中" />
                 <el-option label="已完成" value="已完成" />
@@ -705,28 +669,19 @@
               </el-select>
             </div>
           </div>
-          
+
           <div class="meta-row">
             <div class="meta-item full-width">
               <label class="meta-label">
-                <el-icon><User /></el-icon>
+                <el-icon>
+                  <User />
+                </el-icon>
                 负责人
               </label>
-              <el-select 
-                v-model="selectedTask.assigned_to" 
-                size="small" 
-                class="assignee-select"
-                placeholder="请选择负责人"
-                clearable
-                :disabled="selectedTask.status === '已完成'"
-                @change="handleAssigneeChange"
-              >
-                <el-option 
-                  v-for="member in projectMembers" 
-                  :key="member.user_id"
-                  :label="member.name || member.email" 
-                  :value="member.user_id"
-                >
+              <el-select v-model="selectedTask.assigned_to" size="small" class="assignee-select" placeholder="请选择负责人"
+                clearable :disabled="selectedTask.status === '已完成'" @change="handleAssigneeChange">
+                <el-option v-for="member in projectMembers" :key="member.user_id" :label="member.name || member.email"
+                  :value="member.user_id">
                   <div class="assignee-option">
                     <span class="member-name">{{ member.name || member.email }}</span>
                     <el-tag size="small" type="info">{{ member.role }}</el-tag>
@@ -735,11 +690,13 @@
               </el-select>
             </div>
           </div>
-          
+
           <div class="meta-row" v-if="selectedTask.due_date">
             <div class="meta-item">
               <label class="meta-label">
-                <el-icon><Calendar /></el-icon>
+                <el-icon>
+                  <Calendar />
+                </el-icon>
                 截止日期
               </label>
               <span class="due-date">{{ formatDate(selectedTask.due_date) }}</span>
@@ -747,7 +704,7 @@
           </div>
         </div>
       </div>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="taskDetailVisible = false">关闭</el-button>
@@ -758,15 +715,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  ArrowLeft, 
-  List, 
-  Check, 
-  Clock, 
-  User, 
+import type { FormInstance, InputInstance } from 'element-plus'
+import {
+  ArrowLeft,
+  List,
+  Check,
+  Clock,
+  User,
   Setting,
   Plus,
   Document,
@@ -780,11 +738,11 @@ import {
   MoreFilled,
   TopRight
 } from '@element-plus/icons-vue'
-import { 
-  getProjectById, 
-  getProjectMembers, 
-  getProjectTasks, 
-  createTask, 
+import {
+  getProjectById,
+  getProjectMembers,
+  getProjectTasks,
+  createTask,
   updateTaskStatus,
   updateTaskAssignee,
   inviteProjectMember,
@@ -795,6 +753,7 @@ import {
   createProjectActivity
 } from '../api/projects'
 import { getOrganizationMembers } from '../api/organizations'
+import { useKnowledge } from '../composables/useKnowledge'
 import { useAuthStore } from '../stores/auth'
 import { supabase } from '../lib/supabase'
 
@@ -814,63 +773,199 @@ const deleting = ref(false)
 const showLeaveProjectDialog = ref(false)
 const leavingProject = ref(false)
 const loadingOrgMembers = ref(false)
-const organizationMembers = ref([])
+const organizationMembers = ref<OrganizationMember[]>([])
 
 // 任务详情对话框
 const taskDetailVisible = ref(false)
-const selectedTask = ref(null)
+const selectedTask = ref<Task | null>(null)
+
+// 定义知识库项目接口
+interface KnowledgeItem {
+  id: string
+  type: 'document' | 'link' | 'note'
+  title: string
+  description?: string
+  content?: string
+  url?: string
+  tags: string[]
+  created_at?: string
+  created_by?: string
+  created_by_name?: string
+  project_id: string
+}
 
 // 知识库相关
 const showAddDocumentDialog = ref(false)
 const showKnowledgeDetailDialog = ref(false)
-const selectedKnowledgeItem = ref(null)
+const selectedKnowledgeItem = ref<KnowledgeItem | null>(null)
 const savingDocument = ref(false)
-const knowledgeSearchQuery = ref('')
-const knowledgeItems = ref([])
-const documentFormRef = ref(null)
+const documentFormRef = ref<FormInstance | null>(null)
+const inputTagVisible = ref(false)
+const inputTagValue = ref('')
+const tagInputRef = ref<InputInstance | null>(null)
 
-const project = ref(null)
-const projectMembers = ref([])
-const tasks = ref([])
-const recentActivities = ref([])
+// 使用知识库 composable
+const {
+  knowledgeItems,
+  knowledgeSearchQuery,
+  filteredKnowledgeItems,
+  loading: knowledgeLoading,
+  getKnowledgeTypeName,
+  getKnowledgeTypeColor,
+  loadKnowledgeItems,
+  createKnowledge,
+  updateKnowledge,
+  deleteKnowledge
+} = useKnowledge(route.params.id as string)
 
-const taskForm = reactive({
+// 定义接口类型
+interface Project {
+  id: string
+  name: string
+  description: string
+  status: string
+  created_by: string
+  organization_id: string
+  created_at?: string
+  updated_at?: string
+}
+
+interface ProjectMember {
+  id: string
+  user_id: string
+  role: string
+  name: string
+  email: string
+  joined_at?: string
+  taskCount: number
+}
+
+interface Task {
+  id: string
+  title: string
+  description: string
+  status: string
+  priority: string
+  assigned_to?: string | null
+  assigned_user?: {
+    name: string
+    email: string
+  } | null
+  project_id: string
+  created_at?: string
+  due_date?: string | null
+}
+
+interface Activity {
+  id: string
+  content: string
+  type: string
+  created_at: string
+  user_id?: string
+  user_name?: string
+}
+
+interface OrganizationMember {
+  id: string
+  organization_id: string
+  user_id: string
+  role: string
+  joined_at?: string
+  name: string
+  email: string
+  full_name?: string
+  display_name?: string
+}
+
+const project = ref<Project | null>(null)
+const projectMembers = ref<ProjectMember[]>([])
+const tasks = ref<Task[]>([])
+const recentActivities = ref<Activity[]>([])
+
+interface TaskForm {
+  title: string
+  description: string
+  priority: string
+  assignee: string
+}
+
+interface InviteForm {
+  selectedMember: string
+  role: string
+  email: string
+}
+
+const taskForm = reactive<TaskForm>({
   title: '',
   description: '',
   priority: '中',
   assignee: ''
 })
 
-const inviteForm = reactive({
+const inviteForm = reactive<InviteForm>({
   selectedMember: '',
-  role: 'member'
+  role: 'member',
+  email: ''
 })
 
-const documentForm = reactive({
-  id: undefined as string | undefined,
+interface DocumentForm {
+  id: string | undefined
+  type: 'document' | 'link' | 'note'
+  title: string
+  description: string
+  content: string
+  url: string
+  tags: string[]
+}
+
+const documentForm = reactive<DocumentForm>({
+  id: undefined,
   type: 'document',
   title: '',
   description: '',
   content: '',
   url: '',
-  tags: ''
+  tags: []
 })
+
+// 定义表单验证规则的类型
+type ValidateRule = {
+  required?: boolean;
+  message: string;
+  trigger: string;
+  min?: number;
+  max?: number;
+  validator?: (rule: any, value: any, callback: (error?: Error) => void) => void;
+};
 
 const documentRules = {
   type: [
     { required: true, message: '请选择文档类型', trigger: 'change' }
-  ],
+  ] as ValidateRule[],
   title: [
     { required: true, message: '请输入文档标题', trigger: 'blur' },
     { min: 1, max: 100, message: '标题长度在 1 到 100 个字符', trigger: 'blur' }
-  ],
+  ] as ValidateRule[],
   url: [
-    { required: true, message: '请输入链接地址', trigger: 'blur' },
-    { type: 'url', message: '请输入正确的链接地址', trigger: 'blur' }
-  ],
+    { required: true, message: '请输入链接地址', trigger: 'blur', validator: (rule: any, value: string, callback: (error?: Error) => void) => {
+      if (documentForm.type === 'link' && !value) {
+        callback(new Error('请输入链接地址'))
+      } else if (value && !/^https?:\/\/.+/.test(value)) {
+        callback(new Error('请输入正确的链接地址'))
+      } else {
+        callback()
+      }
+    }}
+  ] as ValidateRule[],
   content: [
-    { required: true, message: '请输入内容', trigger: 'blur' }
-  ]
+    { required: true, message: '请输入内容', trigger: 'blur', validator: (rule: any, value: any, callback: (error?: Error) => void) => {
+      if (['document', 'note'].includes(documentForm.type) && !value) {
+        callback(new Error('请输入内容'))
+      } else {
+        callback()
+      }
+    }}
+  ] as ValidateRule[]
 }
 
 const projectStats = computed(() => {
@@ -897,27 +992,14 @@ const canManageProject = ref(false)
 // 计算可用的组织成员（排除已经是项目成员的用户）
 const availableOrgMembers = computed(() => {
   if (!organizationMembers.value || !projectMembers.value) return []
-  
+
   const projectMemberIds = projectMembers.value.map(member => member.user_id)
-  return organizationMembers.value.filter(member => 
+  return organizationMembers.value.filter(member =>
     !projectMemberIds.includes(member.user_id)
   )
 })
 
 // 过滤后的知识库项目
-const filteredKnowledgeItems = computed(() => {
-  if (!knowledgeSearchQuery.value) {
-    return knowledgeItems.value
-  }
-  
-  const query = knowledgeSearchQuery.value.toLowerCase()
-  return knowledgeItems.value.filter(item => 
-    item.title.toLowerCase().includes(query) ||
-    (item.description && item.description.toLowerCase().includes(query)) ||
-    (item.tags && item.tags.toLowerCase().includes(query)) ||
-    (item.content && item.content.toLowerCase().includes(query))
-  )
-})
 
 // 检查项目管理权限
 const checkProjectPermissions = async () => {
@@ -925,13 +1007,13 @@ const checkProjectPermissions = async () => {
     canManageProject.value = false
     return
   }
-  
+
   // 项目创建者可以管理
   if (project.value.created_by === authStore.user.id) {
     canManageProject.value = true
     return
   }
-  
+
   // 检查是否是组织管理员或创建者
   try {
     const { data: memberData } = await supabase
@@ -940,19 +1022,19 @@ const checkProjectPermissions = async () => {
       .eq('organization_id', project.value.organization_id)
       .eq('user_id', authStore.user.id)
       .single()
-    
+
     if (memberData?.role === 'admin') {
       canManageProject.value = true
       return
     }
-    
+
     // 检查是否是组织创建者
     const { data: orgData } = await supabase
       .from('organizations')
       .select('created_by')
       .eq('id', project.value.organization_id)
       .single()
-    
+
     canManageProject.value = orgData?.created_by === authStore.user.id
   } catch (error) {
     console.error('检查权限失败:', error)
@@ -960,7 +1042,9 @@ const checkProjectPermissions = async () => {
   }
 }
 
-const getStatusType = (status: string) => {
+const getStatusType = (status: string | undefined) => {
+  if (!status) return ''
+  
   const statusMap: Record<string, string> = {
     '进行中': 'success',
     '已完成': 'info',
@@ -990,7 +1074,7 @@ const formatTime = (dateString: string) => {
   const date = new Date(dateString)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  
+
   if (diff < 3600000) { // 1小时内
     return `${Math.floor(diff / 60000)}分钟前`
   } else if (diff < 86400000) { // 24小时内
@@ -1034,13 +1118,13 @@ const handleCreateTask = async () => {
     ElMessage.warning('请输入任务标题')
     return
   }
-  
+
   creatingTask.value = true
   try {
     if (!authStore.user?.id) {
       throw new Error('用户未登录')
     }
-    
+
     await createTask({
       title: taskForm.title,
       description: taskForm.description,
@@ -1051,27 +1135,16 @@ const handleCreateTask = async () => {
     })
     ElMessage.success('任务创建成功')
     showCreateTaskDialog.value = false
-    
+
     // 添加到最近活动
-    try {
-      await createProjectActivity(
-        route.params.id as string,
-        `创建了新任务"${taskForm.title}"`,
-        'task_created'
-      )
-      // 重新加载活动列表
-      loadProjectActivities()
-    } catch (error) {
-      // 如果数据库调用失败，使用本地记录
-      addLocalActivity(`创建了新任务"${taskForm.title}"`, 'task_created')
-    }
-    
+    await addActivity(`创建了新任务"${taskForm.title}"`, 'task_created')
+
     // 重置表单
     taskForm.title = ''
     taskForm.description = ''
     taskForm.priority = '中'
     taskForm.assignee = ''
-    
+
     // 重新加载任务列表和项目成员（更新任务统计）
     loadTasks()
     loadProjectMembers()
@@ -1086,7 +1159,7 @@ const handleCreateTask = async () => {
 // 加载组织成员列表
 const loadOrganizationMembers = async () => {
   if (!project.value) return
-  
+
   loadingOrgMembers.value = true
   try {
     const members = await getOrganizationMembers(project.value.organization_id)
@@ -1105,7 +1178,7 @@ const handleAddMember = async () => {
     ElMessage.warning('请选择要添加的成员')
     return
   }
-  
+
   inviting.value = true
   try {
     // 直接添加为项目成员
@@ -1116,19 +1189,19 @@ const handleAddMember = async () => {
         user_id: inviteForm.selectedMember,
         role: inviteForm.role
       })
-    
+
     if (error) throw error
-    
+
     ElMessage.success('成员添加成功')
     showInviteMemberDialog.value = false
-    
+
     // 重置表单
     inviteForm.selectedMember = ''
     inviteForm.role = 'member'
-    
+
     // 重新加载项目成员
     await loadProjectMembers()
-    
+
   } catch (error: any) {
     ElMessage.error('添加成员失败: ' + error.message)
     console.error('添加成员错误详情:', error)
@@ -1178,15 +1251,15 @@ const cancelDelete = () => {
 // 退出项目
 const leaveProject = async () => {
   if (!authStore.user?.id || !project.value?.id) return
-  
+
   leavingProject.value = true
   try {
     // 调用API移除当前用户的项目成员身份
     await removeProjectMember(project.value.id, authStore.user.id)
-    
+
     ElMessage.success('已成功退出项目')
     showLeaveProjectDialog.value = false
-    
+
     // 退出后跳转到组织详情页面
     router.push(`/organizations/${project.value.organization_id}`)
   } catch (error: any) {
@@ -1236,7 +1309,7 @@ const getStatusTagType = (status: string) => {
 }
 
 // 格式化日期
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string | null | undefined) => {
   if (!dateString) return ''
   const date = new Date(dateString)
   return date.toLocaleDateString('zh-CN')
@@ -1245,52 +1318,43 @@ const formatDate = (dateString: string) => {
 // 处理任务状态变更
 const handleStatusChange = async (newStatus: string) => {
   if (!selectedTask.value) return
-  
+
   try {
     await updateTaskStatus(selectedTask.value.id, newStatus)
     ElMessage.success('任务状态更新成功')
-    
+
     // 更新本地任务列表中的状态
     const taskIndex = tasks.value.findIndex(t => t.id === selectedTask.value.id)
     if (taskIndex !== -1) {
       tasks.value[taskIndex].status = newStatus
     }
-    
+
     // 添加到最近活动
-    try {
-      await createProjectActivity(
-        route.params.id as string,
-        `将任务"${selectedTask.value.title}"状态更改为"${newStatus}"`,
-        'task_status_changed'
-      )
-      // 重新加载活动列表
-      loadProjectActivities()
-    } catch (error) {
-      // 如果数据库调用失败，使用本地记录
-      addLocalActivity(`将任务"${selectedTask.value.title}"状态更改为"${newStatus}"`, 'task_status_changed')
-    }
-    
+    await addActivity(`将任务"${selectedTask.value.title}"状态更改为"${newStatus}"`, 'task_status_changed')
+
   } catch (error: any) {
     ElMessage.error('更新任务状态失败: ' + error.message)
     console.error('更新任务状态错误:', error)
     // 恢复原状态
-    selectedTask.value.status = tasks.value.find(t => t.id === selectedTask.value.id)?.status
+    if (selectedTask.value) {
+      selectedTask.value.status = tasks.value.find(t => t.id === selectedTask.value?.id)?.status || ''
+    }
   }
 }
 
 // 处理任务负责人变更
 const handleAssigneeChange = async (newAssigneeId: string) => {
   if (!selectedTask.value) return
-  
+
   try {
     await updateTaskAssignee(selectedTask.value.id, newAssigneeId)
-    
+
     // 获取新负责人信息
     const newAssignee = newAssigneeId ? projectMembers.value.find(m => m.user_id === newAssigneeId) : null
     const assigneeName = newAssignee ? (newAssignee.name || newAssignee.email) : '未分配'
-    
+
     ElMessage.success('任务负责人更新成功')
-    
+
     // 更新本地任务列表中的负责人
     const taskIndex = tasks.value.findIndex(t => t.id === selectedTask.value.id)
     if (taskIndex !== -1) {
@@ -1301,7 +1365,7 @@ const handleAssigneeChange = async (newAssigneeId: string) => {
         display_name: newAssignee.name || newAssignee.email
       } : null
     }
-    
+
     // 更新选中任务的负责人信息
     selectedTask.value.assigned_to = newAssigneeId
     selectedTask.value.assigned_user = newAssignee ? {
@@ -1309,24 +1373,13 @@ const handleAssigneeChange = async (newAssigneeId: string) => {
       email: newAssignee.email,
       display_name: newAssignee.name || newAssignee.email
     } : null
-    
+
     // 添加到最近活动
-    try {
-      await createProjectActivity(
-        route.params.id as string,
-        `将任务"${selectedTask.value.title}"分配给"${assigneeName}"`,
-        'task_assigned'
-      )
-      // 重新加载活动列表
-      loadProjectActivities()
-    } catch (error) {
-      // 如果数据库调用失败，使用本地记录
-      addLocalActivity(`将任务"${selectedTask.value.title}"分配给"${assigneeName}"`, 'task_assigned')
-    }
-    
+    await addActivity(`将任务"${selectedTask.value.title}"分配给"${assigneeName}"`, 'task_assigned')
+
     // 重新加载项目成员（更新任务统计）
     loadProjectMembers()
-    
+
   } catch (error: any) {
     ElMessage.error('更新任务负责人失败: ' + error.message)
     console.error('更新任务负责人错误:', error)
@@ -1354,121 +1407,38 @@ const loadProjectActivities = async () => {
   }
 }
 
-// 添加本地活动记录的辅助函数
-const addLocalActivity = (description: string, activityType: string = 'general') => {
-  const activity = {
-    id: Date.now().toString(),
-    description: `${authStore.user?.email?.split('@')[0] || '用户'} ${description}`,
-    activity_type: activityType,
-    created_at: new Date().toISOString(),
-    user_name: authStore.user?.email?.split('@')[0] || '用户'
-  }
-  
-  recentActivities.value.unshift(activity)
-  
-  // 保存到本地存储
-  const projectId = route.params.id as string
-  localStorage.setItem(`project_activities_${projectId}`, JSON.stringify(recentActivities.value.slice(0, 20)))
-}
-
-// 知识库相关方法
-const getKnowledgeTypeName = (type: string) => {
-  const typeMap: Record<string, string> = {
-    'document': '文档',
-    'link': '链接',
-    'note': '笔记'
-  }
-  return typeMap[type] || '文档'
-}
-
-const getKnowledgeTypeColor = (type: string) => {
-  const colorMap: Record<string, string> = {
-    'document': 'primary',
-    'link': 'success',
-    'note': 'warning'
-  }
-  return colorMap[type] || 'primary'
-}
-
-// 加载知识库项目
-const loadKnowledgeItems = () => {
+// 添加活动记录的辅助函数
+const addActivity = async (description: string, activityType: string = 'general') => {
   try {
-    const projectId = route.params.id as string
-    const stored = localStorage.getItem(`project_knowledge_${projectId}`)
-    
-    if (stored) {
-      try {
-        knowledgeItems.value = JSON.parse(stored)
-        console.log('从本地存储加载知识库数据:', knowledgeItems.value)
-      } catch (e) {
-        console.warn('解析本地存储数据失败:', e)
-        knowledgeItems.value = []
-      }
-    } else {
-      // 初始化一些示例数据
-      console.log('初始化示例知识库数据')
-      knowledgeItems.value = [
-        {
-          id: '1',
-          type: 'document',
-          title: '项目需求文档',
-          description: '详细的项目需求说明和功能规格',
-          content: '# 项目需求文档\n\n## 1. 项目概述\n本项目旨在开发一个现代化的项目管理系统...\n\n## 2. 功能需求\n- 用户管理\n- 项目管理\n- 任务管理\n- 团队协作\n\n## 3. 技术要求\n- 前端：Vue 3 + TypeScript\n- 后端：Node.js + Express\n- 数据库：PostgreSQL',
-          tags: '需求,文档,规格',
-          created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-          created_by_name: '产品经理'
-        },
-        {
-          id: '2',
-          type: 'link',
-          title: 'API 文档',
-          description: '项目后端 API 接口文档',
-          url: 'https://api-docs.example.com',
-          tags: 'API,接口,文档',
-          created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-          created_by_name: '后端开发'
-        },
-        {
-          id: '3',
-          type: 'note',
-          title: '会议纪要 - 2024/01/15',
-          description: '项目启动会议的重要决议和行动项',
-          content: '会议时间：2024年1月15日 14:00-16:00\n参会人员：产品经理、技术负责人、UI设计师\n\n主要议题：\n1. 项目范围确认\n2. 技术架构讨论\n3. 开发计划制定\n\n决议事项：\n- 采用微服务架构\n- 使用 Vue 3 作为前端框架\n- 预计开发周期 3 个月\n\n行动项：\n- 产品经理：完善需求文档（1月20日前）\n- 技术负责人：搭建开发环境（1月25日前）\n- UI设计师：提供设计稿（2月1日前）',
-          tags: '会议,纪要,决议',
-          created_at: new Date().toISOString(),
-          created_by_name: '项目经理'
-        }
-      ]
-      saveKnowledgeItems()
-    }
-    console.log('知识库数据加载完成，共', knowledgeItems.value.length, '项')
-  } catch (error) {
-    console.error('加载知识库数据失败:', error)
-    knowledgeItems.value = []
+    // 使用Supabase API创建活动记录
+    await createProjectActivity(route.params.id as string, description, activityType)
+    // 重新加载活动列表以获取最新数据
+    await loadProjectActivities()
+  } catch (error: any) {
+    console.error('创建活动记录失败:', error)
+    ElMessage.warning('活动记录可能未保存')
   }
 }
 
-// 保存知识库项目到本地存储
-const saveKnowledgeItems = () => {
-  const projectId = route.params.id as string
-  localStorage.setItem(`project_knowledge_${projectId}`, JSON.stringify(knowledgeItems.value))
-}
+// 知识库相关方法已从 useKnowledge composable 中导入，不需要重复定义
 
 // 打开知识库项目详情
-const openKnowledgeItem = (item: any) => {
+const openKnowledgeItem = (item: KnowledgeItem) => {
   selectedKnowledgeItem.value = item
   showKnowledgeDetailDialog.value = true
 }
 
 // 编辑知识库项目
-const editKnowledgeItem = (item: any) => {
+const editKnowledgeItem = (item: KnowledgeItem) => {
   documentForm.type = item.type
   documentForm.title = item.title
   documentForm.description = item.description || ''
   documentForm.content = item.content || ''
   documentForm.url = item.url || ''
-  documentForm.tags = item.tags || ''
-  
+  // 处理 tags，确保它是字符串数组
+  documentForm.tags = Array.isArray(item.tags) ? item.tags : 
+                     (typeof item.tags === 'string' ? (item.tags as string).split(',').map(tag => tag.trim()) : [])
+
   // 设置编辑模式
   documentForm.id = item.id
   showKnowledgeDetailDialog.value = false
@@ -1476,91 +1446,83 @@ const editKnowledgeItem = (item: any) => {
 }
 
 // 删除知识库项目
-const deleteKnowledgeItem = (item: any) => {
-  ElMessageBox.confirm(
-    `确定要删除文档"${item.title}"吗？`,
-    '确认删除',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  ).then(() => {
-    const index = knowledgeItems.value.findIndex(k => k.id === item.id)
-    if (index !== -1) {
-      knowledgeItems.value.splice(index, 1)
-      saveKnowledgeItems()
-      ElMessage.success('文档删除成功')
-      
-      // 添加到活动记录
-      addLocalActivity(`删除了知识库文档"${item.title}"`, 'knowledge_deleted')
-    }
-  }).catch(() => {
-    // 用户取消删除
-  })
+const deleteKnowledgeItem = async (item: KnowledgeItem) => {
+  try {
+    await deleteKnowledge(item)
+    // 添加到活动记录
+    await addActivity(`删除了知识库文档"${item.title}"`, 'knowledge_deleted')
+  } catch (error: any) {
+    // 错误已在 composable 中处理
+  }
 }
 
 // 保存文档
 const handleSaveDocument = async () => {
   if (!documentFormRef.value) return
-  
+
   try {
     await documentFormRef.value.validate()
-  } catch (error) {
+  } catch (error: any) {
     return
   }
-  
+
   savingDocument.value = true
-  
+
   try {
     const isEdit = !!documentForm.id
     const now = new Date().toISOString()
-    
+
     if (isEdit) {
       // 编辑模式
-      const index = knowledgeItems.value.findIndex(k => k.id === documentForm.id)
-      if (index !== -1) {
-        knowledgeItems.value[index] = {
-          ...knowledgeItems.value[index],
-          type: documentForm.type,
-          title: documentForm.title,
-          description: documentForm.description,
-          content: documentForm.content,
-          url: documentForm.url,
-          tags: documentForm.tags,
-          updated_at: now
-        }
-        ElMessage.success('文档更新成功')
-        addLocalActivity(`更新了知识库文档"${documentForm.title}"`, 'knowledge_updated')
-      }
-    } else {
-      // 新增模式
-      const newItem = {
-        id: Date.now().toString(),
+      await updateKnowledge(documentForm.id as string, {
         type: documentForm.type,
         title: documentForm.title,
         description: documentForm.description,
         content: documentForm.content,
         url: documentForm.url,
-        tags: documentForm.tags,
-        created_at: now,
-        created_by_name: authStore.user?.email?.split('@')[0] || '用户'
-      }
-      
-      knowledgeItems.value.unshift(newItem)
-      ElMessage.success('文档添加成功')
-      addLocalActivity(`添加了知识库文档"${documentForm.title}"`, 'knowledge_created')
+        tags: documentForm.tags
+      })
+      await addActivity(`更新了知识库文档"${documentForm.title}"`, 'knowledge_updated')
+    } else {
+      // 新增模式
+      await createKnowledge({
+        type: documentForm.type,
+        title: documentForm.title,
+        description: documentForm.description,
+        content: documentForm.content,
+        url: documentForm.url,
+        tags: documentForm.tags
+      })
+      await addActivity(`添加了知识库文档"${documentForm.title}"`, 'knowledge_created')
     }
-    
-    saveKnowledgeItems()
+
     showAddDocumentDialog.value = false
     resetDocumentForm()
-    
+
   } catch (error: any) {
     ElMessage.error('保存失败: ' + error.message)
   } finally {
     savingDocument.value = false
   }
+}
+
+// 标签相关方法
+const showTagInput = () => {
+  inputTagVisible.value = true
+  nextTick(() => {
+    tagInputRef.value?.focus()
+  })
+}
+
+const handleInputTagConfirm = () => {
+  if (inputTagValue.value) {
+    const tag = inputTagValue.value.trim()
+    if (tag && !documentForm.tags.includes(tag)) {
+      documentForm.tags.push(tag)
+    }
+  }
+  inputTagVisible.value = false
+  inputTagValue.value = ''
 }
 
 // 重置文档表单
@@ -1571,8 +1533,10 @@ const resetDocumentForm = () => {
   documentForm.description = ''
   documentForm.content = ''
   documentForm.url = ''
-  documentForm.tags = ''
-  
+  documentForm.tags = []
+  inputTagVisible.value = false
+  inputTagValue.value = ''
+
   if (documentFormRef.value) {
     documentFormRef.value.resetFields()
   }
@@ -1700,7 +1664,7 @@ onMounted(() => {
 }
 
 .stat-card:hover {
-  /* transform: translateY(-2px); */
+  transform: translateY(-2px);
 }
 
 .stat-content {
@@ -1951,7 +1915,7 @@ onMounted(() => {
 
 .member-card:hover {
   border-color: #409eff;
-  box-shadow: 
+  box-shadow:
     0 12px 32px rgba(64, 158, 255, 0.12),
     0 4px 16px rgba(64, 158, 255, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -2306,15 +2270,15 @@ onMounted(() => {
   .content-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .task-board {
     grid-template-columns: 1fr;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .members-grid {
     grid-template-columns: 1fr;
   }
@@ -2615,18 +2579,18 @@ onMounted(() => {
     width: 95% !important;
     margin: 0 auto;
   }
-  
+
   .meta-row {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .task-header {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
   }
-  
+
   .status-tag {
     align-self: flex-start;
   }
