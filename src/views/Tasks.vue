@@ -407,7 +407,7 @@ import { getUserProjects } from '../api/projects'
 import { getUserTasks, createTask, updateTask, deleteTask, markTaskAsCompleted } from '../api/tasks'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const authStore = useAuthStore() // 移除未使用变量
 
 const loading = ref(true)
 const saving = ref(false)
@@ -658,10 +658,10 @@ const handleSaveTask = async () => {
       await updateTask(editingTask.value.id, {
         title: taskForm.title,
         description: taskForm.description,
-        project_id: taskForm.project_id || null,
+        project_id: taskForm.project_id || undefined,
         priority: taskForm.priority,
         status: taskForm.status,
-        due_date: taskForm.due_date || null
+        due_date: taskForm.due_date || undefined
       })
       ElMessage.success('任务更新成功')
     } else {

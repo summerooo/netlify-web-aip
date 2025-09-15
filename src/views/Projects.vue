@@ -273,8 +273,8 @@ const searchQuery = ref('')
 const statusFilter = ref('')
 const roleFilter = ref('')
 
-const projects = ref([])
-const userOrganizations = ref([])
+const projects = ref<Array<{ user_role: string; name: string; [key: string]: any }>>([])
+const userOrganizations = ref<Array<{ id: string; name: string }>>([])
 const projectFormRef = ref(null)
 
 const projectForm = reactive({
@@ -426,7 +426,7 @@ const handleCreateProject = async () => {
       name: projectForm.name,
       description: projectForm.description,
       status: projectForm.status,
-      organization_name: userOrganizations.value.find(org => org.id === projectForm.organization_id)?.name || '未知组织',
+      organization_name: (userOrganizations.value.find(org => org.id === projectForm.organization_id) as { name?: string })?.name || '未知组织',
       user_role: 'creator',
       task_count: 0,
       member_count: 1,
@@ -434,7 +434,7 @@ const handleCreateProject = async () => {
       created_at: new Date().toISOString()
     }
     
-    projects.value.unshift(newProject)
+    projects.value.unshift(newProject as any)
     
     ElMessage.success('项目创建成功')
     showCreateProjectDialog.value = false
