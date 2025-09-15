@@ -1,36 +1,40 @@
 <template>
   <div class="project-detail">
     <el-container>
-      <el-header class="header">
-        <div class="header-left">
+              <div class="back-section">
           <el-button 
-            type="text" 
+            link
+            size="small"
             @click="$router.back()"
             class="back-btn"
           >
             <el-icon><ArrowLeft /></el-icon>
             返回
           </el-button>
-          <div class="project-info">
-            <h1>{{ project?.name }}</h1>
-            <p>{{ project?.description || '暂无描述' }}</p>
-          </div>
         </div>
-        <div class="header-right">
-          <el-tag :type="getStatusType(project?.status)" size="large">
-            {{ project?.status }}
-          </el-tag>
-          <el-dropdown v-if="canManageProject" trigger="click" class="project-actions">
-            <el-button type="primary" :icon="Setting" circle />
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="openDeleteDialog">
-                  <el-icon><Delete /></el-icon>
-                  删除项目
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+      <el-header class="header">
+
+        <div class="header-content">
+          <div class="title-row">
+            <h1>{{ project?.name }}</h1>
+            <div class="header-actions">
+              <el-tag :type="getStatusType(project?.status)" size="large">
+                {{ project?.status }}
+              </el-tag>
+              <el-dropdown v-if="canManageProject" trigger="click" class="project-actions">
+                <el-button type="primary" :icon="Setting" circle />
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item @click="openDeleteDialog">
+                      <el-icon><Delete /></el-icon>
+                      删除项目
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
+          <p class="project-description">{{ project?.description || '暂无描述' }}</p>
         </div>
       </el-header>
 
@@ -1590,25 +1594,70 @@ onMounted(() => {
 }
 
 .header {
-  background: white;
+  background: #fff;
   border-bottom: 1px solid #e4e7ed;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
+  padding: 12px 20px 16px 20px;
+  box-sizing: border-box;
+  height: auto;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.back-section {
+  padding: 12px 20px 16px 20px;
+  /* margin-bottom: 12px; */
 }
 
 .back-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
   color: #606266;
+  padding: 2px 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+}
+
+.back-btn .el-icon {
+  font-size: 14px;
+}
+
+.back-btn:hover {
+  color: #409eff;
+  background: none;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-row h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.project-description {
+  margin: 0;
+  color: #909399;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
 }
 
 .project-info h1 {
@@ -1651,7 +1700,7 @@ onMounted(() => {
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  /* transform: translateY(-2px); */
 }
 
 .stat-content {

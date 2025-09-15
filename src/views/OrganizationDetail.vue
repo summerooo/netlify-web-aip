@@ -1,30 +1,34 @@
 <template>
   <div class="organization-detail">
     <el-container>
-      <el-header class="header">
-        <div class="header-left">
+      <div class="back-section">
           <el-button 
-            type="text" 
+            link
+            size="small"
             @click="$router.back()"
             class="back-btn"
           >
             <el-icon><ArrowLeft /></el-icon>
             返回
           </el-button>
-          <div class="org-info">
-            <h1>{{ organization?.name }}</h1>
-            <p>{{ organization?.description || '暂无描述' }}</p>
-          </div>
         </div>
-        <div class="header-right">
-          <el-button 
-            v-if="isOrgAdmin" 
-            type="primary" 
-            @click="showCreateProjectDialog = true"
-          >
-            <el-icon><Plus /></el-icon>
-            创建项目
-          </el-button>
+      <el-header class="header">
+        
+        <div class="header-content">
+          <div class="title-row">
+            <h1>{{ organization?.name }}</h1>
+            <div class="header-actions">
+              <el-button 
+                v-if="isOrgAdmin" 
+                type="primary" 
+                @click="showCreateProjectDialog = true"
+              >
+                <el-icon><Plus /></el-icon>
+                创建项目
+              </el-button>
+            </div>
+          </div>
+          <p class="org-description">{{ organization?.description || '暂无描述' }}</p>
         </div>
       </el-header>
 
@@ -61,7 +65,7 @@
                         v-model="project.status" 
                         size="small"
                         @click.stop
-                        @change="(newStatus) => updateProjectStatus(project.id, newStatus)"
+                        @change="(newStatus: string) => updateProjectStatus(project.id, newStatus)"
                         class="status-select"
                       >
                         <el-option label="计划中" value="计划中" />
@@ -432,10 +436,10 @@ const loadMembers = async () => {
 const handleCreateProject = async () => {
   if (!projectFormRef.value) return
 
-  await projectFormRef.value.validate(async (valid: boolean) => {
-    if (valid) {
-      creatingProject.value = true
-      try {
+  try {
+    await projectFormRef.value.validate()
+    creatingProject.value = true
+    try {
         // 检查当前用户是否是组织创建者或管理员
         const { data: orgData } = await supabase
           .from('organizations')
@@ -485,8 +489,10 @@ const handleCreateProject = async () => {
       } finally {
         creatingProject.value = false
       }
-    }
-  })
+  } catch (e) {
+    // 校验不通过，直接返回
+    return
+  }
 }
 
 const removeMember = async (memberId: string) => {
@@ -673,20 +679,65 @@ onMounted(async () => {
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
+  background: #fff;
   border-bottom: 1px solid #ebeef5;
+  padding: 12px 20px 16px 20px;
+  box-sizing: border-box;
+  height: auto;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+.back-section {
+  margin-bottom: 12px;
 }
 
 .back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #606266;
+  padding: 2px 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+}
+
+.back-btn .el-icon {
+  font-size: 14px;
+}
+
+.back-btn:hover {
+  color: #409eff;
+  background: none;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-row h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.org-description {
+  margin: 0;
+  color: #909399;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
