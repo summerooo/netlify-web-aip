@@ -111,7 +111,7 @@
                         </el-icon>
                       </div>
                       <div class="activity-content">
-                        <p>{{ activity.description }}</p>
+                        <p>{{ activity.description || activity.content }}</p>
                         <span class="activity-time">{{ formatTime(activity.created_at) }}</span>
                       </div>
                     </div>
@@ -164,7 +164,7 @@
                       <p>{{ task.description }}</p>
                       <div class="task-meta">
                         <el-tag size="small">{{ task.priority }}</el-tag>
-                        <span class="assignee">{{ task.assigned_user?.full_name || task.assigned_user?.email || '未分配'
+                        <span class="assignee">{{ task.assigned_user?.full_name || task.assigned_user?.name || task.assigned_user?.email || '未分配'
                           }}</span>
                       </div>
                     </div>
@@ -182,7 +182,7 @@
                       <p>{{ task.description }}</p>
                       <div class="task-meta">
                         <el-tag size="small" type="warning">{{ task.priority }}</el-tag>
-                        <span class="assignee">{{ task.assigned_user?.display_name || '未分配' }}</span>
+                        <span class="assignee">{{ task.assigned_user?.display_name || task.assigned_user?.name || task.assigned_user?.email || '未分配' }}</span>
                       </div>
                     </div>
                   </div>
@@ -200,7 +200,7 @@
                       <p>{{ task.description }}</p>
                       <div class="task-meta">
                         <el-tag size="small" type="success">{{ task.priority }}</el-tag>
-                        <span class="assignee">{{ task.assigned_user?.full_name || task.assigned_user?.email || '未分配'
+                        <span class="assignee">{{ task.assigned_user?.full_name || task.assigned_user?.name || task.assigned_user?.email || '未分配'
                           }}</span>
                       </div>
                     </div>
@@ -539,7 +539,7 @@
               创建者：{{ selectedKnowledgeItem.created_by_name || '未知' }}
             </span>
             <span class="knowledge-detail-date">
-              {{ formatTime(selectedKnowledgeItem.created_at) }}
+              {{ formatTime(selectedKnowledgeItem.created_at || new Date().toISOString()) }}
             </span>
           </div>
           <div class="knowledge-detail-description" v-if="selectedKnowledgeItem.description">
@@ -577,13 +577,93 @@
 
       <template #footer>
         <el-button @click="showKnowledgeDetailDialog = false">关闭</el-button>
-        <el-button type="primary" @click="editKnowledgeItem(selectedKnowledgeItem)">
+        <el-button type="primary" @click="selectedKnowledgeItem && editKnowledgeItem(selectedKnowledgeItem)">
           <el-icon>
             <Edit />
           </el-icon>
           编辑
         </el-button>
       </template>
+    </el-dialog>
+
+    <!-- AI聊天对话框 -->
+    <el-dialog v-model="showAIChatDialog" title="AI 项目助手" width="600px" class="ai-chat-dialog">
+      <div class="chat-container">
+        <div class="chat-messages" ref="chatMessagesRef">
+          <div v-for="message in chatMessages" :key="message.id" 
+               :class="['chat-message', message.type === 'user' ? 'user-message' : 'ai-message']">
+            <div class="message-avatar">
+              <el-icon v-if="message.type === 'user'">
+                <User />
+              </el-icon>
+              <el-icon v-else>
+                <Setting />
+              </el-icon>
+            </div>
+            <div class="message-content">
+              <div class="message-bubble">
+                <pre class="message-text">{{ message.content }}</pre>
+              </div>
+              <div class="message-time">{{ formatChatTime(message.timestamp) }}</div>
+            </div>
+          </div>
+          
+          <!-- 加载指示器 -->
+          <div v-if="isChatLoading" class="chat-message ai-message loading-message">
+            <div class="message-avatar">
+              <el-icon>
+                <Setting />
+              </el-icon>
+            </div>
+            <div class="message-content">
+              <div class="message-bubble">
+                <div class="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="chat-input-area">
+          <div class="chat-actions">
+            <el-button size="small" type="info" plain @click="clearChatHistory" 
+                       :disabled="chatMessages.length === 0">
+              <el-icon><Delete /></el-icon>
+              清空记录
+            </el-button>
+          </div>
+          <div class="chat-input-container">
+            <el-input
+              v-model="chatInput"
+              type="textarea"
+              :rows="3"
+              placeholder="输入您的问题，例如：分析当前项目进度、有什么风险需要注意、帮我优化任务分配..."
+              @keydown.ctrl.enter="sendChatMessage"
+              :disabled="isChatLoading || !authStore.user?.id"
+              resize="none"
+              maxlength="1000"
+              show-word-limit
+            />
+            <el-button 
+              type="primary" 
+              @click="sendChatMessage" 
+              :loading="isChatLoading"
+              :disabled="!chatInput.trim() || !authStore.user?.id"
+              class="send-button"
+            >
+              <el-icon v-if="!isChatLoading"><Promotion /></el-icon>
+              {{ isChatLoading ? '发送中...' : '发送' }}
+            </el-button>
+          </div>
+          <div class="chat-tips">
+            <span>💡 提示：按 Ctrl + Enter 快速发送消息</span>
+            <span v-if="!authStore.user?.id" class="login-tip">⚠️ 需要登录才能使用AI助手</span>
+          </div>
+        </div>
+      </div>
     </el-dialog>
 
     <!-- 任务详情对话框 -->
@@ -698,7 +778,8 @@ import {
   Link,
   Edit,
   MoreFilled,
-  TopRight
+  TopRight,
+  Promotion
 } from '@element-plus/icons-vue'
 import {
   getProjectById,
@@ -750,6 +831,7 @@ interface KnowledgeItem {
   content?: string
   url?: string
   created_at?: string
+  updated_at?: string
   created_by?: string
   created_by_name?: string
   project_id: string
@@ -808,6 +890,8 @@ interface Task {
   assigned_user?: {
     name: string
     email: string
+    full_name?: string
+    display_name?: string
   } | null
   project_id: string
   created_at?: string
@@ -821,6 +905,7 @@ interface Activity {
   created_at: string
   user_id?: string
   user_name?: string
+  description?: string
 }
 
 interface OrganizationMember {
@@ -1087,7 +1172,7 @@ const handleCreateTask = async () => {
       status: '待办', // 默认状态
       priority: taskForm.priority,
       project_id: route.params.id as string,
-      assigned_to: taskForm.assignee || null // 如果没有指定，则设为 null
+      assigned_to: taskForm.assignee || undefined
     })
     ElMessage.success('任务创建成功')
     showCreateTaskDialog.value = false
@@ -1233,8 +1318,226 @@ const sendAnotherInvitation = () => {
   showInviteMemberDialog.value = true
 }
 
+// AI聊天相关状态
+const showAIChatDialog = ref(false)
+const chatMessages = ref<Array<{id: string, type: 'user' | 'ai', content: string, timestamp: Date}>>([])
+const chatInput = ref('')
+const isChatLoading = ref(false)
+
 const openAIChat = () => {
-  ElMessage.info('AI聊天功能开发中')
+  // 检查用户是否已登录
+  if (!authStore.user?.id) {
+    ElMessage.warning('请先登录后再使用AI助手')
+    return
+  }
+
+  showAIChatDialog.value = true
+  
+  // 如果是第一次打开，添加欢迎消息
+  if (chatMessages.value.length === 0) {
+    const projectName = project.value?.name || '项目'
+    const welcomeMessage = `您好！我是${projectName}的AI助手小助手。
+
+我可以帮助您：
+• 📊 分析项目进度和风险
+• 👥 优化任务分配建议
+• ❓ 回答项目管理相关问题
+• 📈 生成项目报告和统计
+• 💡 提供项目管理最佳实践
+• 🔍 搜索项目知识库内容
+
+当前项目概况：
+• 项目状态：${project.value?.status || '未知'}
+• 任务总数：${projectStats.value.totalTasks}个
+• 完成任务：${projectStats.value.completedTasks}个
+• 团队成员：${projectStats.value.totalMembers}人
+
+请告诉我您需要什么帮助？`
+    
+    chatMessages.value.push({
+      id: Date.now().toString(),
+      type: 'ai',
+      content: welcomeMessage,
+      timestamp: new Date()
+    })
+  }
+}
+
+// 发送聊天消息
+const sendChatMessage = async () => {
+  if (!chatInput.value.trim() || isChatLoading.value) return
+
+  // 检查用户登录状态
+  if (!authStore.user?.id) {
+    ElMessage.warning('请先登录后再使用AI助手')
+    showAIChatDialog.value = false
+    router.push('/login')
+    return
+  }
+
+  const userMessage = chatInput.value.trim()
+  chatInput.value = ''
+
+  // 添加用户消息
+  chatMessages.value.push({
+    id: Date.now().toString(),
+    type: 'user',
+    content: userMessage,
+    timestamp: new Date()
+  })
+
+  isChatLoading.value = true
+
+  try {
+    // 根据n8n工作流要求构建请求数据
+    const requestData = {
+      message: userMessage,
+      project_id: project.value?.id || null,
+      user_id: authStore.user.id // 确保用户ID存在
+    }
+
+    console.log('发送AI聊天请求:', requestData)
+
+    // 验证必要参数
+    if (!requestData.user_id) {
+      throw new Error('用户身份验证失败，请重新登录')
+    }
+
+    if (!requestData.message) {
+      throw new Error('消息内容不能为空')
+    }
+
+    // 调用指定的n8n接口
+    const response = await fetch('https://n8n-anerlnxq.ap-southeast-1.clawcloudrun.com/webhook-test/ai-chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': authStore.user.id
+      },
+      body: JSON.stringify(requestData)
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('API响应错误:', response.status, errorText)
+      
+      // 尝试解析错误信息
+      let errorMessage = errorText
+      try {
+        const errorData = JSON.parse(errorText)
+        errorMessage = errorData.message || errorData.error || errorText
+      } catch (e) {
+        // 使用原始错误文本
+      }
+      
+      throw new Error(`HTTP ${response.status}: ${errorMessage}`)
+    }
+
+    const data = await response.json()
+    console.log('AI响应数据:', data)
+    
+    // 检查响应格式
+    if (!data.success) {
+      throw new Error(data.message || '服务返回错误')
+    }
+
+    // 添加AI回复
+    chatMessages.value.push({
+      id: Date.now().toString(),
+      type: 'ai',
+      content: data.response || '抱歉，我现在无法处理您的请求，请稍后再试。',
+      timestamp: new Date()
+    })
+
+    // 滚动到底部
+    nextTick(() => {
+      const chatContainer = document.querySelector('.chat-messages')
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight
+      }
+    })
+
+  } catch (error: any) {
+    console.error('AI聊天错误:', error)
+    
+    let errorMessage = '抱歉，AI服务暂时不可用。'
+    
+    // 根据错误类型提供更具体的错误信息
+    if (error.message.includes('Failed to fetch')) {
+      errorMessage += '请检查网络连接。'
+    } else if (error.message.includes('用户ID不能为空')) {
+      errorMessage = '用户身份验证失败，请重新登录后再试。'
+      // 提示用户重新登录
+      setTimeout(() => {
+        ElMessageBox.confirm(
+          '您的登录状态已失效，请重新登录后继续使用AI助手。',
+          '登录已失效',
+          {
+            confirmButtonText: '重新登录',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        ).then(() => {
+          showAIChatDialog.value = false
+          router.push('/login')
+        }).catch(() => {
+          // 用户取消
+        })
+      }, 1000)
+    } else if (error.message.includes('HTTP 400')) {
+      errorMessage += '请求参数错误，请重试。'
+    } else if (error.message.includes('HTTP 401')) {
+      errorMessage += '身份验证失败，请重新登录。'
+    } else if (error.message.includes('HTTP 500')) {
+      errorMessage += '服务器内部错误，请稍后再试。'
+    } else {
+      errorMessage += `错误详情：${error.message}`
+    }
+    
+    // 添加错误消息
+    chatMessages.value.push({
+      id: Date.now().toString(),
+      type: 'ai',
+      content: errorMessage,
+      timestamp: new Date()
+    })
+    
+    ElMessage.error('AI聊天服务连接失败')
+  } finally {
+    isChatLoading.value = false
+  }
+}
+
+// 清空聊天记录
+const clearChatHistory = () => {
+  ElMessageBox.confirm(
+    '确定要清空所有聊天记录吗？此操作不可撤销。',
+    '确认清空',
+    {
+      confirmButtonText: '清空',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(() => {
+    chatMessages.value = []
+    ElMessage.success('聊天记录已清空')
+    // 重新显示欢迎消息
+    if (showAIChatDialog.value) {
+      setTimeout(() => {
+        openAIChat()
+      }, 100)
+    }
+  }).catch(() => {
+    // 用户取消操作
+  })
+}
+
+// 格式化聊天时间
+const formatChatTime = (date: Date) => {
+  return date.toLocaleTimeString('zh-CN', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  })
 }
 
 // 打开任务详情对话框
@@ -1280,20 +1583,20 @@ const handleStatusChange = async (newStatus: string) => {
     ElMessage.success('任务状态更新成功')
 
     // 更新本地任务列表中的状态
-    const taskIndex = tasks.value.findIndex(t => t.id === selectedTask.value.id)
+    const taskIndex = tasks.value.findIndex(t => t.id === selectedTask.value!.id)
     if (taskIndex !== -1) {
       tasks.value[taskIndex].status = newStatus
     }
 
     // 添加到最近活动
-    await addActivity(`将任务"${selectedTask.value.title}"状态更改为"${newStatus}"`, 'task_status_changed')
+    await addActivity(`将任务"${selectedTask.value!.title}"状态更改为"${newStatus}"`, 'task_status_changed')
 
   } catch (error: any) {
     ElMessage.error('更新任务状态失败: ' + error.message)
     console.error('更新任务状态错误:', error)
     // 恢复原状态
     if (selectedTask.value) {
-      selectedTask.value.status = tasks.value.find(t => t.id === selectedTask.value?.id)?.status || ''
+      selectedTask.value.status = tasks.value.find(t => t.id === selectedTask.value!.id)?.status || ''
     }
   }
 }
@@ -1312,26 +1615,28 @@ const handleAssigneeChange = async (newAssigneeId: string) => {
     ElMessage.success('任务负责人更新成功')
 
     // 更新本地任务列表中的负责人
-    const taskIndex = tasks.value.findIndex(t => t.id === selectedTask.value.id)
+    const taskIndex = tasks.value.findIndex(t => t.id === selectedTask.value!.id)
     if (taskIndex !== -1) {
       tasks.value[taskIndex].assigned_to = newAssigneeId
       tasks.value[taskIndex].assigned_user = newAssignee ? {
-        full_name: newAssignee.name,
+        name: newAssignee.name,
         email: newAssignee.email,
+        full_name: newAssignee.name,
         display_name: newAssignee.name || newAssignee.email
       } : null
     }
 
     // 更新选中任务的负责人信息
-    selectedTask.value.assigned_to = newAssigneeId
-    selectedTask.value.assigned_user = newAssignee ? {
-      full_name: newAssignee.name,
+    selectedTask.value!.assigned_to = newAssigneeId
+    selectedTask.value!.assigned_user = newAssignee ? {
+      name: newAssignee.name,
       email: newAssignee.email,
+      full_name: newAssignee.name,
       display_name: newAssignee.name || newAssignee.email
     } : null
 
     // 添加到最近活动
-    await addActivity(`将任务"${selectedTask.value.title}"分配给"${assigneeName}"`, 'task_assigned')
+    await addActivity(`将任务"${selectedTask.value!.title}"分配给"${assigneeName}"`, 'task_assigned')
 
     // 重新加载项目成员（更新任务统计）
     loadProjectMembers()
@@ -1340,7 +1645,7 @@ const handleAssigneeChange = async (newAssigneeId: string) => {
     ElMessage.error('更新任务负责人失败: ' + error.message)
     console.error('更新任务负责人错误:', error)
     // 恢复原负责人
-    selectedTask.value.assigned_to = tasks.value.find(t => t.id === selectedTask.value.id)?.assigned_to
+    selectedTask.value!.assigned_to = tasks.value.find(t => t.id === selectedTask.value!.id)?.assigned_to
   }
 }
 
@@ -1401,7 +1706,14 @@ const editKnowledgeItem = (item: KnowledgeItem) => {
 // 删除知识库项目
 const deleteKnowledgeItem = async (item: KnowledgeItem) => {
   try {
-    await deleteKnowledge(item)
+    // 确保必要的字段存在
+    const itemToDelete = {
+      ...item,
+      created_by: item.created_by || authStore.user?.id || '',
+      created_at: item.created_at || new Date().toISOString(),
+      updated_at: item.updated_at || new Date().toISOString()
+    }
+    await deleteKnowledge(itemToDelete)
     // 添加到活动记录
     await addActivity(`删除了知识库文档"${item.title}"`, 'knowledge_deleted')
   } catch (error: any) {
@@ -2518,6 +2830,256 @@ onMounted(() => {
 
   .status-tag {
     align-self: flex-start;
+  }
+}
+
+/* AI聊天对话框样式 */
+.ai-chat-dialog .el-dialog__body {
+  padding: 0;
+  height: 600px;
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  background: #f8f9fa;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.chat-message {
+  display: flex;
+  gap: 12px;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.chat-message.user-message {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.user-message .message-avatar {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+.ai-message .message-avatar {
+  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(103, 194, 58, 0.3);
+}
+
+.message-content {
+  flex: 1;
+  max-width: 70%;
+}
+
+.user-message .message-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: 18px;
+  position: relative;
+  word-wrap: break-word;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-message .message-bubble {
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  color: white;
+  border-bottom-right-radius: 6px;
+}
+
+.ai-message .message-bubble {
+  background: white;
+  color: #303133;
+  border: 1px solid #e4e7ed;
+  border-bottom-left-radius: 6px;
+}
+
+.message-text {
+  margin: 0;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.user-message .message-text {
+  color: white;
+}
+
+.message-time {
+  font-size: 11px;
+  color: #c0c4cc;
+  margin-top: 4px;
+  padding: 0 4px;
+}
+
+.user-message .message-time {
+  text-align: right;
+}
+
+.chat-input-area {
+  background: white;
+  border-top: 1px solid #e4e7ed;
+  padding: 16px 20px;
+}
+
+.chat-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.chat-input-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.chat-input-container .el-textarea {
+  flex: 1;
+}
+
+.send-button {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.login-tip {
+  color: #f56c6c !important;
+  background: rgba(245, 108, 108, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 500;
+  margin-left: 16px;
+}
+
+.chat-tips {
+  margin-top: 8px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chat-tips span {
+  font-size: 12px;
+  color: #909399;
+  background: #f5f7fa;
+  padding: 4px 12px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+/* 加载动画 */
+.loading-message .message-bubble {
+  background: #f0f9ff;
+  border: 1px solid #b3e5fc;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #409eff;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 聊天对话框响应式 */
+@media (max-width: 768px) {
+  .ai-chat-dialog {
+    width: 95% !important;
+    margin: 0 auto;
+  }
+  
+  .ai-chat-dialog .el-dialog__body {
+    height: 500px;
+  }
+  
+  .chat-container {
+    height: 500px;
+  }
+  
+  .message-content {
+    max-width: 85%;
+  }
+  
+  .chat-input-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .send-button {
+    width: 100%;
+    height: 36px;
   }
 }
 </style>

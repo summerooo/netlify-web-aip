@@ -1,0 +1,679 @@
+{
+  "name": "增强版AI项目助手",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-project-assistant",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "webhook-start",
+      "name": "AI助手请求入口",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 400],
+      "webhookId": "ai-project-assistant"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 解析请求数据并验证\nconst requestBody = $input.first().json.body;\nconst headers = $input.first().json.headers;\n\n// 提取用户消息和项目ID\nconst message = requestBody.message;\nconst projectId = requestBody.project_id;\nconst userId = requestBody.user_id || headers['x-user-id'];\n\n// 验证必要参数\nif (!message || message.trim() === '') {\n  return {\n    error: 'MESSAGE_REQUIRED',\n    message: '消息内容不能为空'\n  };\n}\n\nif (!userId) {\n  return {\n    error: 'USER_ID_REQUIRED', \n    message: '用户ID不能为空'\n  };\n}\n\nreturn {\n  message: message.trim(),\n  project_id: projectId || null,\n  user_id: userId,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "parse-request",
+      "name": "解析请求数据",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.error }}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "id": "validate-request",
+      "name": "验证请求",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "user_profiles",
+        "filterType": "manual",
+        "conditions": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "operation": "equals",
+              "keyValue": "={{ $('解析请求数据').item.json.user_id }}"
+            }
+          ]
+        }
+      },
+      "id": "get-user-profile",
+      "name": "获取用户资料",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "project_members",
+        "filterType": "manual",
+        "conditions": {
+          "conditions": [
+            {
+              "keyName": "user_id",
+              "operation": "equals",
+              "keyValue": "={{ $('解析请求数据').item.json.user_id }}"
+            }
+          ]
+        }
+      },
+      "id": "get-user-projects",
+      "name": "获取用户项目",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [900, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $('解析请求数据').item.json.project_id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "check-project-context",
+      "name": "检查项目上下文",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "projects",
+        "filterType": "manual",
+        "conditions": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "operation": "equals",
+              "keyValue": "={{ $('解析请求数据').item.json.project_id }}"
+            }
+          ]
+        }
+      },
+      "id": "get-project-details",
+      "name": "获取项目详情",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1340, 200],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "tasks",
+        "filterType": "manual",
+        "conditions": {
+          "conditions": [
+            {
+              "keyName": "project_id",
+              "operation": "equals",
+              "keyValue": "={{ $('解析请求数据').item.json.project_id }}"
+            }
+          ]
+        },
+        "sort": {
+          "sortFields": [
+            {
+              "fieldName": "updated_at",
+              "order": "DESC"
+            }
+          ]
+        },
+        "limit": 15
+      },
+      "id": "get-project-tasks",
+      "name": "获取项目任务",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "knowledge_items",
+        "filterType": "manual",
+        "conditions": {
+          "conditions": [
+            {
+              "keyName": "project_id",
+              "operation": "equals",
+              "keyValue": "={{ $('解析请求数据').item.json.project_id }}"
+            }
+          ]
+        },
+        "sort": {
+          "sortFields": [
+            {
+              "fieldName": "updated_at",
+              "order": "DESC"
+            }
+          ]
+        },
+        "limit": 10
+      },
+      "id": "get-project-knowledge",
+      "name": "获取项目知识库",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1340, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "project_members",
+        "filterType": "manual",
+        "conditions": {
+          "conditions": [
+            {
+              "keyName": "project_id",
+              "operation": "equals",
+              "keyValue": "={{ $('解析请求数据').item.json.project_id }}"
+            }
+          ]
+        }
+      },
+      "id": "get-project-members",
+      "name": "获取项目成员",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1340, 500],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "tasks",
+        "filterType": "manual",
+        "conditions": {
+          "conditions": [
+            {
+              "keyName": "assigned_to",
+              "operation": "equals",
+              "keyValue": "={{ $('解析请求数据').item.json.user_id }}"
+            }
+          ]
+        },
+        "sort": {
+          "sortFields": [
+            {
+              "fieldName": "updated_at",
+              "order": "DESC"
+            }
+          ]
+        },
+        "limit": 10
+      },
+      "id": "get-user-tasks",
+      "name": "获取用户任务",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1120, 600],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 构建智能AI助手上下文\nconst userMessage = $('解析请求数据').first().json.message;\nconst userId = $('解析请求数据').first().json.user_id;\nconst projectId = $('解析请求数据').first().json.project_id;\n\n// 获取用户信息\nconst userProfile = $('获取用户资料').first()?.json || {};\nconst userProjects = $('获取用户项目').all().map(item => item.json) || [];\nconst userTasks = $('获取用户任务').all().map(item => item.json) || [];\n\n// 获取项目相关信息（如果有项目上下文）\nlet projectDetails = null;\nlet projectTasks = [];\nlet projectKnowledge = [];\nlet projectMembers = [];\n\nif (projectId) {\n  projectDetails = $('获取项目详情').first()?.json || null;\n  projectTasks = $('获取项目任务').all().map(item => item.json) || [];\n  projectKnowledge = $('获取项目知识库').all().map(item => item.json) || [];\n  projectMembers = $('获取项目成员').all().map(item => item.json) || [];\n}\n\n// 构建系统提示词\nlet systemPrompt = `你是一个专业的AI项目管理助手，名叫小助手。你能帮助用户管理项目、任务、知识库，并提供项目管理建议。\n\n当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n\n用户信息：\n- 姓名：${userProfile.full_name || '用户'}\n- 邮箱：${userProfile.email || '未知'}\n- 参与项目数：${userProjects.length}个\n- 个人任务数：${userTasks.length}个`;\n\nif (projectDetails) {\n  systemPrompt += `\n\n当前项目上下文：\n- 项目名称：${projectDetails.name}\n- 项目描述：${projectDetails.description || '无描述'}\n- 项目状态：${projectDetails.status || '未知'}\n- 创建时间：${new Date(projectDetails.created_at).toLocaleDateString('zh-CN')}\n- 项目成员：${projectMembers.length}人\n- 项目任务：${projectTasks.length}个\n- 知识库条目：${projectKnowledge.length}个`;\n\n  // 添加项目任务概览\n  if (projectTasks.length > 0) {\n    systemPrompt += `\n\n项目任务概览：`;\n    const tasksByStatus = {};\n    projectTasks.forEach(task => {\n      const status = task.status || '未知';\n      if (!tasksByStatus[status]) tasksByStatus[status] = [];\n      tasksByStatus[status].push(task);\n    });\n    \n    Object.keys(tasksByStatus).forEach(status => {\n      systemPrompt += `\n- ${status}：${tasksByStatus[status].length}个`;\n    });\n    \n    systemPrompt += `\n\n最近更新的任务：`;\n    projectTasks.slice(0, 5).forEach((task, index) => {\n      systemPrompt += `\n${index + 1}. ${task.title} (${task.status || '未知'}) - ${task.priority || '普通'}优先级`;\n      if (task.assigned_to) {\n        systemPrompt += ` - 负责人：${task.assigned_to}`;\n      }\n    });\n  }\n\n  // 添加知识库概览\n  if (projectKnowledge.length > 0) {\n    systemPrompt += `\n\n项目知识库：`;\n    const knowledgeByType = {};\n    projectKnowledge.forEach(item => {\n      const type = item.type || '未知';\n      if (!knowledgeByType[type]) knowledgeByType[type] = [];\n      knowledgeByType[type].push(item);\n    });\n    \n    Object.keys(knowledgeByType).forEach(type => {\n      systemPrompt += `\n- ${type}：${knowledgeByType[type].length}个`;\n    });\n    \n    systemPrompt += `\n\n最新知识库条目：`;\n    projectKnowledge.slice(0, 3).forEach((item, index) => {\n      systemPrompt += `\n${index + 1}. ${item.title} (${item.type}) - ${item.description || '无描述'}`;\n    });\n  }\n} else {\n  // 无项目上下文时，显示用户的整体情况\n  systemPrompt += `\n\n用户项目概览：`;\n  if (userProjects.length > 0) {\n    systemPrompt += `\n参与的项目：${userProjects.length}个`;\n  } else {\n    systemPrompt += `\n暂无参与的项目`;\n  }\n  \n  if (userTasks.length > 0) {\n    systemPrompt += `\n\n个人任务概览：`;\n    const tasksByStatus = {};\n    userTasks.forEach(task => {\n      const status = task.status || '未知';\n      if (!tasksByStatus[status]) tasksByStatus[status] = [];\n      tasksByStatus[status].push(task);\n    });\n    \n    Object.keys(tasksByStatus).forEach(status => {\n      systemPrompt += `\n- ${status}：${tasksByStatus[status].length}个`;\n    });\n    \n    systemPrompt += `\n\n最近的任务：`;\n    userTasks.slice(0, 5).forEach((task, index) => {\n      systemPrompt += `\n${index + 1}. ${task.title} (${task.status || '未知'}) - ${task.priority || '普通'}优先级`;\n    });\n  }\n}\n\nsystemPrompt += `\n\n你的职责：\n1. 回答项目管理相关问题\n2. 提供任务管理建议\n3. 帮助分析项目进度\n4. 推荐最佳实践\n5. 协助知识管理\n6. 提供团队协作建议\n\n请用友好、专业的语调回答用户问题，并根据上述信息提供个性化的建议。`;\n\n// 构建消息数组\nconst messages = [\n  {\n    role: \"system\",\n    content: systemPrompt\n  },\n  {\n    role: \"user\", \n    content: userMessage\n  }\n];\n\nreturn {\n  messages: messages,\n  context: {\n    user_id: userId,\n    project_id: projectId,\n    user_profile: userProfile,\n    project_details: projectDetails,\n    project_tasks_count: projectTasks.length,\n    project_knowledge_count: projectKnowledge.length,\n    user_tasks_count: userTasks.length,\n    user_projects_count: userProjects.length\n  },\n  user_message: userMessage,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "build-ai-context",
+      "name": "构建AI上下文",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 400]
+    },
+    {
+      "parameters": {
+        "model": "gpt-3.5-turbo",
+        "messages": {
+          "messageType": "multipleMessages",
+          "messages": "={{ $json.messages }}"
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 1500,
+          "topP": 1,
+          "frequencyPenalty": 0,
+          "presencePenalty": 0
+        }
+      },
+      "id": "ai-response",
+      "name": "AI智能回复",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1780, 400],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-credentials",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 分析AI回复内容，提取可能的操作建议\nconst aiResponse = $('AI智能回复').first().json.choices[0].message.content;\nconst context = $('构建AI上下文').first().json.context;\nconst userMessage = $('构建AI上下文').first().json.user_message;\n\n// 分析用户意图和AI回复，提取结构化信息\nconst analysis = {\n  intent_detected: null,\n  suggested_actions: [],\n  mentioned_tasks: [],\n  mentioned_projects: [],\n  urgency_level: 'normal'\n};\n\n// 简单的意图识别\nconst userMessageLower = userMessage.toLowerCase();\nif (userMessageLower.includes('创建') || userMessageLower.includes('新建')) {\n  analysis.intent_detected = 'create';\n} else if (userMessageLower.includes('查看') || userMessageLower.includes('显示')) {\n  analysis.intent_detected = 'view';\n} else if (userMessageLower.includes('更新') || userMessageLower.includes('修改')) {\n  analysis.intent_detected = 'update';\n} else if (userMessageLower.includes('删除') || userMessageLower.includes('移除')) {\n  analysis.intent_detected = 'delete';\n} else if (userMessageLower.includes('帮助') || userMessageLower.includes('如何')) {\n  analysis.intent_detected = 'help';\n} else if (userMessageLower.includes('统计') || userMessageLower.includes('报告')) {\n  analysis.intent_detected = 'report';\n}\n\n// 检测紧急程度\nif (userMessageLower.includes('紧急') || userMessageLower.includes('急') || userMessageLower.includes('马上')) {\n  analysis.urgency_level = 'high';\n} else if (userMessageLower.includes('不急') || userMessageLower.includes('有时间')) {\n  analysis.urgency_level = 'low';\n}\n\nreturn {\n  response: aiResponse,\n  timestamp: new Date().toISOString(),\n  context: context,\n  analysis: analysis,\n  user_message: userMessage,\n  response_length: aiResponse.length,\n  has_project_context: !!context.project_id\n};"
+      },
+      "id": "analyze-response",
+      "name": "分析回复内容",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.context.user_id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "should-save-history",
+      "name": "是否保存历史",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2220, 400]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "ai_chat_history",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $('分析回复内容').item.json.context.user_id }}"
+            },
+            {
+              "fieldId": "project_id", 
+              "fieldValue": "={{ $('分析回复内容').item.json.context.project_id || null }}"
+            },
+            {
+              "fieldId": "user_message",
+              "fieldValue": "={{ $('分析回复内容').item.json.user_message }}"
+            },
+            {
+              "fieldId": "ai_response",
+              "fieldValue": "={{ $('分析回复内容').item.json.response }}"
+            },
+            {
+              "fieldId": "intent_detected",
+              "fieldValue": "={{ $('分析回复内容').item.json.analysis.intent_detected }}"
+            },
+            {
+              "fieldId": "urgency_level",
+              "fieldValue": "={{ $('分析回复内容').item.json.analysis.urgency_level }}"
+            },
+            {
+              "fieldId": "response_length",
+              "fieldValue": "={{ $('分析回复内容').item.json.response_length }}"
+            },
+            {
+              "fieldId": "created_at",
+              "fieldValue": "={{ $('分析回复内容').item.json.timestamp }}"
+            }
+          ]
+        }
+      },
+      "id": "save-chat-history",
+      "name": "保存聊天历史",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2440, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"response\": $('分析回复内容').item.json.response,\n  \"timestamp\": $('分析回复内容').item.json.timestamp,\n  \"context\": {\n    \"has_project_context\": $('分析回复内容').item.json.has_project_context,\n    \"project_name\": $('分析回复内容').item.json.context.project_details?.name || null,\n    \"user_name\": $('分析回复内容').item.json.context.user_profile?.full_name || '用户',\n    \"tasks_count\": $('分析回复内容').item.json.context.project_tasks_count || 0,\n    \"knowledge_count\": $('分析回复内容').item.json.context.project_knowledge_count || 0\n  },\n  \"analysis\": $('分析回复内容').item.json.analysis,\n  \"success\": true\n} }}",
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Access-Control-Allow-Origin", 
+              "value": "*"
+            }
+          ]
+        }
+      },
+      "id": "success-response",
+      "name": "成功响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2660, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"error\": $('解析请求数据').item.json.error,\n  \"message\": $('解析请求数据').item.json.message,\n  \"timestamp\": new Date().toISOString(),\n  \"success\": false\n} }}",
+        "responseCode": 400,
+        "responseHeaders": {
+          "entries": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Access-Control-Allow-Origin",
+              "value": "*"
+            }
+          ]
+        }
+      },
+      "id": "error-response",
+      "name": "错误响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 600]
+    }
+  ],
+  "connections": {
+    "AI助手请求入口": {
+      "main": [
+        [
+          {
+            "node": "解析请求数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析请求数据": {
+      "main": [
+        [
+          {
+            "node": "验证请求",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "验证请求": {
+      "main": [
+        [
+          {
+            "node": "获取用户资料",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "获取用户项目",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "获取用户任务",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "错误响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取用户资料": {
+      "main": [
+        [
+          {
+            "node": "检查项目上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取用户项目": {
+      "main": [
+        [
+          {
+            "node": "检查项目上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "检查项目上下文": {
+      "main": [
+        [
+          {
+            "node": "获取项目详情",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "获取项目任务",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "获取项目知识库",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "获取项目成员",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "构建AI上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取项目详情": {
+      "main": [
+        [
+          {
+            "node": "构建AI上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取项目任务": {
+      "main": [
+        [
+          {
+            "node": "构建AI上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取项目知识库": {
+      "main": [
+        [
+          {
+            "node": "构建AI上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取项目成员": {
+      "main": [
+        [
+          {
+            "node": "构建AI上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取用户任务": {
+      "main": [
+        [
+          {
+            "node": "构建AI上下文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "构建AI上下文": {
+      "main": [
+        [
+          {
+            "node": "AI智能回复",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI智能回复": {
+      "main": [
+        [
+          {
+            "node": "分析回复内容",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "分析回复内容": {
+      "main": [
+        [
+          {
+            "node": "是否保存历史",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "是否保存历史": {
+      "main": [
+        [
+          {
+            "node": "保存聊天历史",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "成功响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "保存聊天历史": {
+      "main": [
+        [
+          {
+            "node": "成功响应",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "enhanced-ai-project-assistant",
+  "tags": []
+}

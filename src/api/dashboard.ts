@@ -22,19 +22,17 @@ export async function getUserStats(userId: string) {
 
     const organizationIds = organizations?.map(org => org.organization_id) || []
 
-    // 获取项目数量
-    let projects = []
-    if (organizationIds.length > 0) {
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('id')
-        .in('organization_id', organizationIds)
-      
-      if (projectError) {
-        console.warn('获取项目数据失败:', projectError)
-      } else {
-        projects = projectData || []
-      }
+    // 获取用户参与的项目数量
+    const { data: userProjects, error: projectError } = await supabase
+      .from('project_members')
+      .select('project_id')
+      .eq('user_id', userId)
+
+    let projectCount = 0
+    if (!projectError && userProjects) {
+      projectCount = userProjects.length
+    } else if (projectError) {
+      console.warn('获取用户项目数据失败:', projectError)
     }
 
     // 获取待办任务数量 (简化查询，避免中文状态问题)
@@ -47,21 +45,29 @@ export async function getUserStats(userId: string) {
       console.warn('获取任务数据失败:', taskError)
     }
 
-    // 获取文档数量
-    const { data: documents, error: docError } = await supabase
-      .from('documents')
-      .select('id')
-      .eq('created_by', userId)
+    // 获取知识库文档数量（复用已获取的项目数据）
+    let knowledgeCount = 0
+    if (!projectError && userProjects && userProjects.length > 0) {
+      const projectIds = userProjects.map(p => p.project_id)
+      
+      // 获取这些项目的知识库数量
+      const { data: knowledgeItems, error: knowledgeError } = await supabase
+        .from('knowledge_items')
+        .select('id')
+        .in('project_id', projectIds)
 
-    if (docError) {
-      console.warn('获取文档数据失败:', docError)
+      if (!knowledgeError && knowledgeItems) {
+        knowledgeCount = knowledgeItems.length
+      } else if (knowledgeError) {
+        console.warn('获取知识库数据失败:', knowledgeError)
+      }
     }
 
     return {
       organizations: organizations?.length || 0,
-      projects: projects?.length || 0,
+      projects: projectCount,
       tasks: tasks?.length || 0,
-      documents: documents?.length || 0
+      documents: knowledgeCount
     }
   } catch (error) {
     console.error('获取用户统计数据失败:', error)
