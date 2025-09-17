@@ -66,16 +66,15 @@ CREATE TABLE IF NOT EXISTS public.tasks (
 );
 
 -- 创建AI聊天历史表
-CREATE TABLE IF NOT EXISTS public.chat_history (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
-    organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
-    message TEXT NOT NULL,
-    response TEXT NOT NULL,
-    context_type TEXT NOT NULL CHECK (context_type IN ('organization', 'project', 'task')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE public.chat_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
 
 -- 创建知识库文档表
 CREATE TABLE IF NOT EXISTS public.documents (

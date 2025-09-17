@@ -566,8 +566,7 @@
           </div>
 
           <div v-else class="document-content">
-            <div class="content-viewer">
-              <pre>{{ selectedKnowledgeItem.content || '暂无内容' }}</pre>
+            <div class="content-viewer markdown-body" v-html="renderMarkdown(selectedKnowledgeItem.content || '暂无内容')">
             </div>
           </div>
 
@@ -602,7 +601,7 @@
             </div>
             <div class="message-content">
               <div class="message-bubble">
-                <pre class="message-text">{{ message.content }}</pre>
+                <div class="message-text markdown-body" v-html="renderMarkdown(message.content)"></div>
               </div>
               <div class="message-time">{{ formatChatTime(message.timestamp) }}</div>
             </div>
@@ -757,7 +756,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, InputInstance } from 'element-plus'
@@ -1323,6 +1322,71 @@ const showAIChatDialog = ref(false)
 const chatMessages = ref<Array<{id: string, type: 'user' | 'ai', content: string, timestamp: Date}>>([])
 const chatInput = ref('')
 const isChatLoading = ref(false)
+const chatMessagesRef = ref<HTMLElement | null>(null)
+
+const scrollChatToBottom = () => {
+  nextTick(() => {
+    const el = chatMessagesRef.value
+    if (el) el.scrollTop = el.scrollHeight
+  })
+}
+
+// 简易安全转义
+const escapeHtml = (str: string) =>
+  str.replace(/&/g, '&')
+     .replace(/</g, '<')
+     .replace(/>/g, '>')
+
+// 轻量 Markdown 渲染（基础支持）
+const renderMarkdown = (raw: string) => {
+  if (!raw) return ''
+  const text = raw.replace(/\r\n/g, '\n')
+  // 保护代码块
+  const codeBlocks: string[] = []
+  let html = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (_m, lang = '', code) => {
+    const safe = escapeHtml(code)
+    codeBlocks.push(`<pre class="code-block"><code class="language-${lang}">${safe}</code></pre>`)
+    return `@@CODE_BLOCK_${codeBlocks.length - 1}@@`
+  })
+  // 行内代码
+  html = html.replace(/`([^`\n]+)`/g, (_m, c) => `<code class="inline-code">${escapeHtml(c)}</code>`)
+  // 标题
+  html = html
+    .replace(/^######\s+(.*)$/gm, '<h6>$1</h6>')
+    .replace(/^#####\s+(.*)$/gm, '<h5>$1</h5>')
+    .replace(/^####\s+(.*)$/gm, '<h4>$1</h4>')
+    .replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
+    .replace(/^##\s+(.*)$/gm, '<h2>$1</h2>')
+    .replace(/^#\s+(.*)$/gm, '<h1>$1</h1>')
+  // 引用
+  html = html.replace(/^\s*>\s?(.*)$/gm, '<blockquote>$1</blockquote>')
+             .replace(/^\>\s?(.*)$/gm, '<blockquote>$1</blockquote>')
+  // 无序列表
+  html = html.replace(/(^|\n)(?:[-*+]\s+.+\n?)+/g, (block) => {
+    const items = block.trim().split('\n').map(l => l.replace(/^[-*+]\s+/, '').trim()).filter(Boolean)
+    return `\n<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>\n`
+  })
+  // 有序列表
+  html = html.replace(/(^|\n)(?:\d+\.\s+.+\n?)+/g, (block) => {
+    const items = block.trim().split('\n').map(l => l.replace(/^\d+\.\s+/, '').trim()).filter(Boolean)
+    return `\n<ol>${items.map(i => `<li>${i}</li>`).join('')}</ol>\n`
+  })
+  // 加粗/斜体
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+             .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+             .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+             .replace(/_([^_]+)_/g, '<em>$1</em>')
+  // 链接
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+  // 段落
+  html = html.split(/\n{2,}/).map(p => {
+    if (/^\s*<\/?(h\d|ul|ol|li|pre|blockquote)/.test(p)) return p
+    return `<p>${p.replace(/\n/g, '<br/>')}</p>`
+  }).join('\n')
+  // 还原代码块
+  html = html.replace(/@@CODE_BLOCK_(\d+)@@/g, (_m, idx) => codeBlocks[Number(idx)] || '')
+  return html
+}
 
 const openAIChat = () => {
   // 检查用户是否已登录
@@ -1360,6 +1424,7 @@ const openAIChat = () => {
       content: welcomeMessage,
       timestamp: new Date()
     })
+    scrollChatToBottom()
   }
 }
 
@@ -1385,6 +1450,7 @@ const sendChatMessage = async () => {
     content: userMessage,
     timestamp: new Date()
   })
+  scrollChatToBottom()
 
   isChatLoading.value = true
 
@@ -1433,12 +1499,25 @@ const sendChatMessage = async () => {
       throw new Error(`HTTP ${response.status}: ${errorMessage}`)
     }
 
-    const data = await response.json()
+    // 优雅解析响应，兼容空体或非JSON
+    const rawText = await response.text()
+    let data: any = null
+    if (rawText) {
+      try {
+        data = JSON.parse(rawText)
+      } catch (e) {
+        console.warn('响应非JSON，原文：', rawText)
+        throw new Error(`服务返回非JSON响应：${rawText.slice(0, 200)}`)
+      }
+    } else {
+      throw new Error('服务无响应内容（空响应体）')
+    }
+
     console.log('AI响应数据:', data)
-    
+
     // 检查响应格式
     if (!data.success) {
-      throw new Error(data.message || '服务返回错误')
+      throw new Error(data.message || data.error || '服务返回错误')
     }
 
     // 添加AI回复
@@ -1448,6 +1527,7 @@ const sendChatMessage = async () => {
       content: data.response || '抱歉，我现在无法处理您的请求，请稍后再试。',
       timestamp: new Date()
     })
+    scrollChatToBottom()
 
     // 滚动到底部
     nextTick(() => {
@@ -1501,6 +1581,7 @@ const sendChatMessage = async () => {
       content: errorMessage,
       timestamp: new Date()
     })
+    scrollChatToBottom()
     
     ElMessage.error('AI聊天服务连接失败')
   } finally {
@@ -1530,6 +1611,7 @@ const clearChatHistory = () => {
   }).catch(() => {
     // 用户取消操作
   })
+  scrollChatToBottom()
 }
 
 // 格式化聊天时间
@@ -1795,6 +1877,10 @@ const resetDocumentForm = () => {
     documentFormRef.value.resetFields()
   }
 }
+
+watch(chatMessages, () => {
+  scrollChatToBottom()
+})
 
 onMounted(() => {
   loadProject()
@@ -2447,6 +2533,78 @@ onMounted(() => {
   border: 1px solid #e4e7ed;
 }
 
+/* Markdown 基础样式 */
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #303133;
+  word-wrap: break-word;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: 12px 0 8px;
+  font-weight: 600;
+}
+
+.markdown-body p {
+  margin: 8px 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.markdown-body blockquote {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 4px solid #409eff;
+  background: #f5f7fa;
+  color: #606266;
+  border-radius: 4px;
+}
+
+.markdown-body a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.inline-code {
+  background: #f5f7fa;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 90%;
+}
+
+/* 代码块样式 */
+.code-block {
+  background: #0d1117;
+  color: #c9d1d9;
+  border-radius: 8px;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid #30363d;
+}
+
+.code-block code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  white-space: pre;
+}
+
+/* 保留旧 viewer 的基础排版 */
 .content-viewer pre {
   margin: 0;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
