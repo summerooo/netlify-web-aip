@@ -93,7 +93,7 @@
           </div>
         </el-card>
 
-        <el-card class="ai-assistant">
+        <!-- <el-card class="ai-assistant">
           <template #header>
             <div class="card-header">
               <span>AI 助手</span>
@@ -110,7 +110,7 @@
           <el-button type="primary" style="width: 100%; margin-top: 16px;">
             开始对话
           </el-button>
-        </el-card>
+        </el-card> -->
 
         <!-- 项目详情面板 -->
         <el-card v-if="selectedProject" class="project-detail-panel">
@@ -294,7 +294,7 @@ onMounted(() => {
 
 .content-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  /* grid-template-columns: 2fr 1fr; */
   gap: 20px;
 }
 

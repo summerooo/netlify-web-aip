@@ -281,7 +281,7 @@ onMounted(() => {
   justify-content: space-between;
   padding: 0 20px;
   border-radius: 12px;
-
+  margin: 0 10px;
 }
 
 .header-left h1 {
@@ -292,7 +292,7 @@ onMounted(() => {
 }
 
 .main-content {
-  padding: 20px;
+  padding: 20px 10px;
 }
 
 .loading-container {
@@ -329,7 +329,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
-  max-width: 1200px;
+  /* max-width: 1200px; */
   margin: 0 auto;
 }
 

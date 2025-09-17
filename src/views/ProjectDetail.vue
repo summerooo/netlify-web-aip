@@ -1474,7 +1474,7 @@ const sendChatMessage = async () => {
     }
 
     // 调用指定的n8n接口
-    const response = await fetch('https://n8n-anerlnxq.ap-southeast-1.clawcloudrun.com/webhook/ai-chat', {
+    const response = await fetch('https://n8n-anerlnxq.ap-southeast-1.clawcloudrun.com/webhook-test/ai-chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
